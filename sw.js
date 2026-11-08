@@ -1,4 +1,4 @@
-const CACHE_NAME = 'voicetask-v3';
+const CACHE_NAME = 'voicetask-v4';
 const ASSETS = [
   './',
   './index.html',

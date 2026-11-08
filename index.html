@@ -104,7 +104,7 @@
       <div>
         <h1 class="text-sm font-extrabold tracking-tight text-white leading-none flex items-center space-x-1.5">
           <span>VOICE TASK</span>
-          <span class="text-[9px] px-1.5 py-0.5 rounded bg-zinc-800 text-zinc-400 font-mono font-normal">v1.3</span>
+          <span class="text-[9px] px-1.5 py-0.5 rounded bg-zinc-800 text-zinc-400 font-mono font-normal">v1.4</span>
         </h1>
         <div class="flex items-center space-x-1.5 mt-0.5">
           <span id="syncIndicator" class="w-1.5 h-1.5 rounded-full bg-emerald-500 inline-block animate-pulse"></span>
@@ -487,9 +487,7 @@ class TickTickClient {
   }
 }
 
-// if (typeof module !== 'undefined') {
-//   module.exports = { TickTickClient, TICKTICK_CONFIG };
-}
+
 
 
 /**
@@ -639,9 +637,7 @@ const TaskParser = {
   }
 };
 
-// if (typeof module !== 'undefined') {
-//   module.exports = { TaskParser };
-}
+
 
 
 /**
@@ -743,9 +739,7 @@ class SpeechEngine {
   }
 }
 
-// if (typeof module !== 'undefined') {
-//   module.exports = { SpeechEngine };
-}
+
 
 
 /**
@@ -832,15 +826,10 @@ class TaskQueue {
   }
 }
 
-// if (typeof module !== 'undefined') {
-//   module.exports = { TaskQueue };
-}
 
 
-  </script>
 
-  <!-- Controller Script -->
-  <script>
+  // --- Controller Logic ---
     // Audio synthesizer for iOS-like clicks
     const audioCtx = new (window.AudioContext || window.webkitAudioContext)();
     function playBeep(freq = 600, duration = 0.04) {
@@ -1241,7 +1230,7 @@ class TaskQueue {
 
     // Register PWA Service Worker with auto-update
     if ('serviceWorker' in navigator) {
-      navigator.serviceWorker.register('sw.js?v=1.3').then((reg) => {
+      navigator.serviceWorker.register('sw.js?v=1.4').then((reg) => {
         reg.onupdatefound = () => {
           const installing = reg.installing;
           installing.onstatechange = () => {
