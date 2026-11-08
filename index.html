@@ -106,7 +106,7 @@
       <div>
         <h1 class="text-sm font-extrabold tracking-tight text-white leading-none flex items-center space-x-1.5">
           <span>VOICE TASK</span>
-          <span class="text-[9px] px-1.5 py-0.5 rounded bg-zinc-800 text-zinc-400 font-mono font-normal">v1.6</span>
+          <span class="text-[9px] px-1.5 py-0.5 rounded bg-zinc-800 text-zinc-400 font-mono font-normal">v1.7</span>
         </h1>
         <div class="flex items-center space-x-1.5 mt-0.5">
           <span id="syncIndicator" class="w-1.5 h-1.5 rounded-full bg-emerald-500 inline-block animate-pulse"></span>
@@ -314,8 +314,8 @@
 
         <div class="flex items-center space-x-2 pt-1 text-xs">
           <span class="text-zinc-400 text-[11px]">Метки:</span>
-          <span id="badgePrio" class="px-2.5 py-0.5 rounded-lg bg-zinc-800 text-zinc-400 font-semibold border border-zinc-700/50">Без приор.</span>
-          <span id="badgeSize" class="px-2.5 py-0.5 rounded-lg bg-zinc-800 text-zinc-400 font-semibold border border-zinc-700/50">Без метки</span>
+          <button type="button" id="badgePrio" onclick="cyclePrioInModal()" class="cursor-pointer select-none active:scale-95 transition-transform px-2.5 py-0.5 rounded-lg bg-zinc-800 text-zinc-400 font-semibold border border-zinc-700/50 hover:border-zinc-500" title="Нажмите для переключения">Без приор.</button>
+          <button type="button" id="badgeSize" onclick="cycleSizeInModal()" class="cursor-pointer select-none active:scale-95 transition-transform px-2.5 py-0.5 rounded-lg bg-zinc-800 text-zinc-400 font-semibold border border-zinc-700/50 hover:border-zinc-500" title="Нажмите для переключения">Без метки</button>
         </div>
       </div>
 
@@ -1244,12 +1244,16 @@ class TaskQueue {
         setSize(selectedSizeTag);
       }
 
+      const activeTags = [];
+      if (selectedPrioTag) activeTags.push(selectedPrioTag);
+      if (selectedSizeTag) activeTags.push(selectedSizeTag);
+
       pendingTask = {
         categoryKey: activeCategory,
         columnIdx: selectedCol,
         title: parsed.title || rawText,
         priority: selectedPrio,
-        tags: parsed.tags
+        tags: activeTags
       };
 
       // Fill modal
@@ -1260,6 +1264,30 @@ class TaskQueue {
       updateModalBadges();
       triggerHaptic('success');
       document.getElementById('confirmModal').classList.remove('hidden');
+    }
+
+    function cyclePrioInModal() {
+      if (selectedPrio === 0) {
+        setPrio(3, '🥎жолтый');
+      } else if (selectedPrio === 3) {
+        setPrio(5, '🏀красный');
+      } else {
+        setPrio(0, null);
+      }
+      updateModalBadges();
+      triggerHaptic('tap');
+    }
+
+    function cycleSizeInModal() {
+      if (!selectedSizeTag) {
+        setSize('мелкий');
+      } else if (selectedSizeTag === 'мелкий') {
+        setSize('большой');
+      } else {
+        setSize(null);
+      }
+      updateModalBadges();
+      triggerHaptic('tap');
     }
 
     function updateModalBadges() {
@@ -1301,6 +1329,12 @@ class TaskQueue {
       pendingTask.title = document.getElementById('modalTitleInput').value.trim();
       pendingTask.categoryKey = document.getElementById('modalCategorySelect').value;
       pendingTask.columnIdx = parseInt(document.getElementById('modalColumnSelect').value, 10);
+      pendingTask.priority = selectedPrio;
+
+      const activeTags = [];
+      if (selectedPrioTag) activeTags.push(selectedPrioTag);
+      if (selectedSizeTag) activeTags.push(selectedSizeTag);
+      pendingTask.tags = activeTags;
 
       document.getElementById('bannerIcon').innerText = '⏳';
       document.getElementById('bannerText').innerText = 'Отправка в TickTick...';
@@ -1455,7 +1489,7 @@ class TaskQueue {
 
     // Register PWA Service Worker with auto-update
     if ('serviceWorker' in navigator) {
-      navigator.serviceWorker.register('sw.js?v=1.6').then((reg) => {
+      navigator.serviceWorker.register('sw.js?v=1.7').then((reg) => {
         reg.onupdatefound = () => {
           const installing = reg.installing;
           installing.onstatechange = () => {
