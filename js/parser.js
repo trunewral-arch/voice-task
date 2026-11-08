@@ -1,16 +1,18 @@
 /**
  * Russian Speech NLP Task Parser for Voice Task PWA
  * Parses columns, priorities, size tags, and cleans task titles
+ * Supports real-time chronological switching (the last spoken command takes precedence)
  */
 
 function matchAndStripAll(text, regex) {
   let matched = false;
   let current = text;
   while (true) {
-    const match = current.match(regex);
+    const rx = new RegExp(regex.source, 'gi');
+    const match = rx.exec(current);
     if (!match) break;
     matched = true;
-    current = current.replace(regex, (m, word) => m.replace(word, ' '));
+    current = current.replace(new RegExp(regex.source, 'gi'), (m, word) => m.replace(word, ' '));
   }
   return { matched, text: current };
 }
@@ -18,33 +20,35 @@ function matchAndStripAll(text, regex) {
 const TaskParser = {
   // Rules for column detection
   columns: [
-    { idx: 0, name: "0-Вход",   pattern: /(?:^|[\s,.:;!?])(ноль|0|вход|инбокс|неотсорт[а-я]*)(?=$|[\s,.:;!?])/i },
-    { idx: 1, name: "1-План",   pattern: /(?:^|[\s,.:;!?])(один|1|план|задач[а-я]*|бэклог)(?=$|[\s,.:;!?])/i },
-    { idx: 2, name: "2-Сейчас", pattern: /(?:^|[\s,.:;!?])(два|2|сейчас|в работе|сегодня|срочно делать)(?=$|[\s,.:;!?])/i },
-    { idx: 3, name: "3-Потом",  pattern: /(?:^|[\s,.:;!?])(три|3|потом|позже|когда-нибудь|отложи)(?=$|[\s,.:;!?])/i },
-    { idx: 4, name: "4-Инфо",   pattern: /(?:^|[\s,.:;!?])(четыре|4|инфо|инфа|заметк[а-я]*|записка)(?=$|[\s,.:;!?])/i }
+    { idx: 0, name: "0-Вход",   pattern: /(?:^|[\s,.:;!?])(ноль|0|вход[а-яё]*|инбокс[а-яё]*|неотсорт[а-яё]*|входящ[а-яё]*)(?=$|[\s,.:;!?])/gi },
+    { idx: 1, name: "1-План",   pattern: /(?:^|[\s,.:;!?])(один|1|план[а-яё]*|задач[а-яё]*|бэклог[а-яё]*|запланируй)(?=$|[\s,.:;!?])/gi },
+    { idx: 2, name: "2-Сейчас", pattern: /(?:^|[\s,.:;!?])(два|2|сейчас|в работе|сегодня|срочно делать|в процесс[а-яё]*)(?=$|[\s,.:;!?])/gi },
+    { idx: 3, name: "3-Потом",  pattern: /(?:^|[\s,.:;!?])(три|3|потом|позже|когда-нибудь|отложи|на потом)(?=$|[\s,.:;!?])/gi },
+    { idx: 4, name: "4-Инфо",   pattern: /(?:^|[\s,.:;!?])(четыре|4|инфо[а-яё]*|инфа|заметк[а-яё]*|записк[а-яё]*|информаци[а-яё]*)(?=$|[\s,.:;!?])/gi }
   ],
 
-  // Rules for priority detection
+  // Rules for priority detection (including reset to 0 / Обычный)
   priorities: [
-    { tag: "🏀красный", priority: 5, pattern: /(?:^|[\s,.:;!?])(красн[а-я]*|огонь|критично|срочно)(?=$|[\s,.:;!?])/i },
-    { tag: "🥎жолтый",  priority: 3, pattern: /(?:^|[\s,.:;!?])(ж[ео]лт[а-я]*|важн[а-я]*)(?=$|[\s,.:;!?])/i }
+    { tag: "🏀красный", priority: 5, pattern: /(?:^|[\s,.:;!?])(красн[а-яё]*|огонь|критичн[а-яё]*|срочн[а-яё]*)(?=$|[\s,.:;!?])/gi },
+    { tag: "🥎жолтый",  priority: 3, pattern: /(?:^|[\s,.:;!?])(ж[еёо]лт[а-яё]*|важн[а-яё]*)(?=$|[\s,.:;!?])/gi },
+    { tag: null,        priority: 0, pattern: /(?:^|[\s,.:;!?])(обычн[а-яё]*|стандартн[а-яё]*|без приоритета|сбрось приоритет)(?=$|[\s,.:;!?])/gi }
   ],
 
-  // Rules for task size detection
+  // Rules for task size detection (including reset to null / Без)
   sizes: [
-    { tag: "мелкий",   pattern: /(?:^|[\s,.:;!?])(мелк[а-я]*|быстр[а-я]*|пятиминутка)(?=$|[\s,.:;!?])/i },
-    { tag: "большой",  pattern: /(?:^|[\s,.:;!?])(больш[а-я]*|долг[а-я]*|проект)(?=$|[\s,.:;!?])/i }
+    { tag: "мелкий",  pattern: /(?:^|[\s,.:;!?])(мелк[а-яё]*|быстр[а-яё]*|пятиминутк[а-яё]*|коротк[а-яё]*)(?=$|[\s,.:;!?])/gi },
+    { tag: "большой", pattern: /(?:^|[\s,.:;!?])(больш[а-яё]*|долг[а-яё]*|проект[а-яё]*|длинн[а-яё]*|тяж[её]л[а-яё]*)(?=$|[\s,.:;!?])/gi },
+    { tag: null,      pattern: /(?:^|[\s,.:;!?])(без размера|без метки|сбрось размер|нормальн[а-яё]*)(?=$|[\s,.:;!?])/gi }
   ],
 
   // Words to strip completely
   garbageWords: [
-    /(?:^|[\s,.:;!?])(запиши|добавь|пометь|напомни|короче|слушай|эээ|ну|так|в общем)(?=$|[\s,.:;!?])/gi
+    /(?:^|[\s,.:;!?])(запиши|добавь|пометь|напомни|короче|слушай|эээ|ну|так|в общем|а нет|нет|хотя)(?=$|[\s,.:;!?])/gi
   ],
 
   // Remove leading category words like "купить" if dictated inside the "6-Купить" project
   categoryPrefixes: [
-    /(?:^|[\s,.:;!?])(купить|покупка|вайб|лиды|лабс|радар|тело|здоровье|роза|разное)(?=$|[\s,.:;!?])/i
+    /(?:^|[\s,.:;!?])(купить|покупка|вайб|лиды|лабс|радар|тело|здоровье|роза|разное)(?=$|[\s,.:;!?])/gi
   ],
 
   parse(rawText, activeCategoryName = '') {
@@ -55,76 +59,88 @@ const TaskParser = {
         priority: 0,
         priorityTag: null,
         sizeTag: null,
-        tags: []
+        tags: [],
+        hasExplicitPriority: false,
+        hasExplicitSize: false
       };
     }
 
-    let text = rawText.trim();
-    let detectedCol = null;
-    let detectedPrio = 0;
-    let detectedPrioTag = null;
-    let detectedSizeTag = null;
-    const tags = [];
+    const textRaw = rawText.trim();
 
-    // 1. Detect and remove column keywords
+    // 1. Find all column occurrences and their positions (chronological order)
+    const colOccurrences = [];
     for (const col of this.columns) {
-      const res = matchAndStripAll(text, col.pattern);
-      if (res.matched) {
-        if (detectedCol === null) detectedCol = col.idx;
-        text = res.text;
+      const rx = new RegExp(col.pattern.source, 'gi');
+      let m;
+      while ((m = rx.exec(textRaw)) !== null) {
+        colOccurrences.push({ pos: m.index, val: col.idx });
       }
     }
+    colOccurrences.sort((a, b) => a.pos - b.pos);
+    const detectedCol = colOccurrences.length > 0 ? colOccurrences[colOccurrences.length - 1].val : null;
 
-    // 2. Detect and remove priority keywords
+    // 2. Find all priority occurrences and their positions
+    const prioOccurrences = [];
     for (const prio of this.priorities) {
-      const res = matchAndStripAll(text, prio.pattern);
-      if (res.matched) {
-        if (!detectedPrioTag) {
-          detectedPrio = prio.priority;
-          detectedPrioTag = prio.tag;
-        }
-        text = res.text;
+      const rx = new RegExp(prio.pattern.source, 'gi');
+      let m;
+      while ((m = rx.exec(textRaw)) !== null) {
+        prioOccurrences.push({ pos: m.index, priority: prio.priority, tag: prio.tag });
       }
     }
+    prioOccurrences.sort((a, b) => a.pos - b.pos);
+    const hasExplicitPriority = prioOccurrences.length > 0;
+    const lastPrio = hasExplicitPriority ? prioOccurrences[prioOccurrences.length - 1] : { priority: 0, tag: null };
 
-    // 3. Detect and remove size keywords
+    // 3. Find all size occurrences and their positions
+    const sizeOccurrences = [];
     for (const size of this.sizes) {
-      const res = matchAndStripAll(text, size.pattern);
-      if (res.matched) {
-        if (!detectedSizeTag) {
-          detectedSizeTag = size.tag;
-        }
-        text = res.text;
+      const rx = new RegExp(size.pattern.source, 'gi');
+      let m;
+      while ((m = rx.exec(textRaw)) !== null) {
+        sizeOccurrences.push({ pos: m.index, tag: size.tag });
       }
     }
+    sizeOccurrences.sort((a, b) => a.pos - b.pos);
+    const hasExplicitSize = sizeOccurrences.length > 0;
+    const lastSizeTag = hasExplicitSize ? sizeOccurrences[sizeOccurrences.length - 1].tag : null;
 
-    // 4. Remove garbage words
+    // 4. Strip all control words, garbage, and redundant category names to get clean task title
+    let cleaned = textRaw;
+    for (const col of this.columns) {
+      cleaned = cleaned.replace(new RegExp(col.pattern.source, 'gi'), (m, word) => m.replace(word, ' '));
+    }
+    for (const prio of this.priorities) {
+      cleaned = cleaned.replace(new RegExp(prio.pattern.source, 'gi'), (m, word) => m.replace(word, ' '));
+    }
+    for (const size of this.sizes) {
+      cleaned = cleaned.replace(new RegExp(size.pattern.source, 'gi'), (m, word) => m.replace(word, ' '));
+    }
     for (const gPattern of this.garbageWords) {
-      text = text.replace(gPattern, ' ');
+      cleaned = cleaned.replace(new RegExp(gPattern.source, 'gi'), (m, word) => m.replace(word, ' '));
     }
-
-    // 5. Remove redundant category prefix from start if speech starts with category name (e.g. "купить ...")
     for (const cPattern of this.categoryPrefixes) {
-      text = text.replace(cPattern, ' ');
+      cleaned = cleaned.replace(new RegExp(cPattern.source, 'gi'), (m, word) => m.replace(word, ' '));
     }
 
-    // 6. Clean up whitespace and capitalize first letter
-    text = text.replace(/\s+/g, ' ').trim();
-    if (text.length > 0) {
-      text = text.charAt(0).toUpperCase() + text.slice(1);
+    cleaned = cleaned.replace(/\s+/g, ' ').trim();
+    if (cleaned.length > 0) {
+      cleaned = cleaned.charAt(0).toUpperCase() + cleaned.slice(1);
     }
 
-    // Populate tags array
-    if (detectedPrioTag) tags.push(detectedPrioTag);
-    if (detectedSizeTag) tags.push(detectedSizeTag);
+    const tags = [];
+    if (lastPrio.tag) tags.push(lastPrio.tag);
+    if (lastSizeTag) tags.push(lastSizeTag);
 
     return {
-      title: text,
+      title: cleaned,
       columnIdx: detectedCol,
-      priority: detectedPrio,
-      priorityTag: detectedPrioTag,
-      sizeTag: detectedSizeTag,
-      tags: tags
+      priority: lastPrio.priority,
+      priorityTag: lastPrio.tag,
+      sizeTag: lastSizeTag,
+      tags: tags,
+      hasExplicitPriority: hasExplicitPriority,
+      hasExplicitSize: hasExplicitSize
     };
   }
 };

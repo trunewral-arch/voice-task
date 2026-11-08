@@ -379,7 +379,8 @@
 
     function triggerHaptic(type = 'tap') {
       if (!('vibrate' in navigator)) return;
-      if (type === 'start') navigator.vibrate(40);
+      if (type === 'tap') navigator.vibrate(15);
+      else if (type === 'start') navigator.vibrate(40);
       else if (type === 'stop') navigator.vibrate(20);
       else if (type === 'success') navigator.vibrate([30, 40, 30]);
       else if (type === 'cancel') navigator.vibrate(80);
@@ -449,16 +450,19 @@
         if (!text) return;
         document.getElementById('bannerText').innerText = text;
 
-        // Live override on the fly
+        // Live override on the fly (continuously reacts to every spoken command)
         const parsed = TaskParser.parse(text, activeCategory);
         if (parsed.columnIdx !== null && parsed.columnIdx !== selectedCol) {
           setCol(parsed.columnIdx);
+          triggerHaptic('tap');
         }
-        if (parsed.priorityTag && parsed.priorityTag !== selectedPrioTag) {
+        if (parsed.hasExplicitPriority && (parsed.priority !== selectedPrio || parsed.priorityTag !== selectedPrioTag)) {
           setPrio(parsed.priority, parsed.priorityTag);
+          triggerHaptic('tap');
         }
-        if (parsed.sizeTag && parsed.sizeTag !== selectedSizeTag) {
+        if (parsed.hasExplicitSize && parsed.sizeTag !== selectedSizeTag) {
           setSize(parsed.sizeTag);
+          triggerHaptic('tap');
         }
       },
       onFinal: (fullText) => {
@@ -555,12 +559,19 @@
       }
 
       const parsed = TaskParser.parse(rawText, activeCategory);
-      if (parsed.columnIdx !== null) selectedCol = parsed.columnIdx;
-      if (parsed.priorityTag) {
+      if (parsed.columnIdx !== null) {
+        selectedCol = parsed.columnIdx;
+        setCol(selectedCol);
+      }
+      if (parsed.hasExplicitPriority) {
         selectedPrio = parsed.priority;
         selectedPrioTag = parsed.priorityTag;
+        setPrio(selectedPrio, selectedPrioTag);
       }
-      if (parsed.sizeTag) selectedSizeTag = parsed.sizeTag;
+      if (parsed.hasExplicitSize) {
+        selectedSizeTag = parsed.sizeTag;
+        setSize(selectedSizeTag);
+      }
 
       pendingTask = {
         categoryKey: activeCategory,

@@ -48,6 +48,70 @@ const testCases = [
     expectedPriorityTag: "🥎жолтый",
     expectedSizeTag: "мелкий", // быстро = мелкий
     expectedTitle: "Батарейки cr2032"
+  },
+  {
+    input: "купить 2 жёлтый мелкий в магазине чижик сыр",
+    expectedColumn: 2,
+    expectedPriority: 3,
+    expectedPriorityTag: "🥎жолтый",
+    expectedSizeTag: "мелкий",
+    expectedTitle: "В магазине чижик сыр"
+  },
+  {
+    input: "купить хлеб вход план сейчас потом инфо",
+    expectedColumn: 4, // last mentioned column: инфо
+    expectedPriority: 0,
+    expectedPriorityTag: null,
+    expectedSizeTag: null,
+    expectedTitle: "Хлеб"
+  },
+  {
+    input: "купить молоко инфо потом сейчас план вход",
+    expectedColumn: 0, // last mentioned column: вход
+    expectedPriority: 0,
+    expectedPriorityTag: null,
+    expectedSizeTag: null,
+    expectedTitle: "Молоко"
+  },
+  {
+    input: "починить замок красный а нет жёлтый",
+    expectedColumn: null,
+    expectedPriority: 3, // last mentioned priority: жёлтый
+    expectedPriorityTag: "🥎жолтый",
+    expectedSizeTag: null,
+    expectedTitle: "Починить замок"
+  },
+  {
+    input: "написать отчет жёлтый а нет красный",
+    expectedColumn: null,
+    expectedPriority: 5, // last mentioned priority: красный
+    expectedPriorityTag: "🏀красный",
+    expectedSizeTag: null,
+    expectedTitle: "Написать отчет"
+  },
+  {
+    input: "проверить почту красный а нет обычный",
+    expectedColumn: null,
+    expectedPriority: 0, // reset to обычный
+    expectedPriorityTag: null,
+    expectedSizeTag: null,
+    expectedTitle: "Проверить почту"
+  },
+  {
+    input: "убрать в гараже мелкий а нет большой",
+    expectedColumn: null,
+    expectedPriority: 0,
+    expectedPriorityTag: null,
+    expectedSizeTag: "большой", // last mentioned size: большой
+    expectedTitle: "Убрать в гараже"
+  },
+  {
+    input: "помыть окно большой а нет без размера",
+    expectedColumn: null,
+    expectedPriority: 0,
+    expectedPriorityTag: null,
+    expectedSizeTag: null, // reset to без размера
+    expectedTitle: "Помыть окно"
   }
 ];
 
