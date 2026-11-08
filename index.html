@@ -1455,7 +1455,7 @@ class TaskQueue {
 
     // Register PWA Service Worker with auto-update
     if ('serviceWorker' in navigator) {
-      navigator.serviceWorker.register('sw.js?v=1.5').then((reg) => {
+      navigator.serviceWorker.register('sw.js?v=1.6').then((reg) => {
         reg.onupdatefound = () => {
           const installing = reg.installing;
           installing.onstatechange = () => {
