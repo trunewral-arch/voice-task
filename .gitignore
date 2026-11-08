@@ -1,0 +1,13 @@
+# OS files
+Thumbs.db
+ehthumbs.db
+Desktop.ini
+.DS_Store
+
+# Local secrets & env
+.env
+.env.*
+
+# Scratch and logs
+scratch/
+*.log

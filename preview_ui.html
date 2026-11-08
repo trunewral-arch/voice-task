@@ -1,0 +1,370 @@
+<!DOCTYPE html>
+<html lang="ru">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+  <title>Voice Task PWA — UI Mockup</title>
+  <script src="https://www.gstatic.com/antigravity/web/dev/tailwindcss.min.js"></script>
+  <style>
+    @import url('https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800&display=swap');
+    body {
+      font-family: 'Inter', -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif;
+      background-color: #09090b;
+      color: #f4f4f5;
+      user-select: none;
+      -webkit-tap-highlight-color: transparent;
+    }
+    .phone-frame {
+      max-width: 412px;
+      margin: 0 auto;
+      background: #000000;
+      border-radius: 40px;
+      border: 6px solid #27272a;
+      box-shadow: 0 25px 50px -12px rgba(0, 0, 0, 0.7), 0 0 40px rgba(59, 130, 246, 0.15);
+      overflow: hidden;
+      min-height: 840px;
+      display: flex;
+      flex-direction: column;
+      position: relative;
+    }
+    .card-btn {
+      transition: all 0.15s cubic-bezier(0.4, 0, 0.2, 1);
+      position: relative;
+      overflow: hidden;
+    }
+    .card-btn:active {
+      transform: scale(0.96);
+      filter: brightness(1.2);
+    }
+    .segment-btn {
+      transition: all 0.2s ease;
+    }
+    .segment-btn.active {
+      background: #ffffff;
+      color: #000000;
+      font-weight: 600;
+      box-shadow: 0 2px 8px rgba(255, 255, 255, 0.2);
+    }
+    .recording-wave {
+      display: inline-block;
+      width: 4px;
+      height: 16px;
+      background: #ef4444;
+      border-radius: 2px;
+      margin: 0 2px;
+      animation: wave 0.8s ease-in-out infinite alternate;
+    }
+    @keyframes wave {
+      0% { height: 6px; }
+      100% { height: 24px; }
+    }
+  </style>
+</head>
+<body class="p-2 sm:p-6 flex items-center justify-center min-h-screen">
+
+  <div class="phone-frame">
+    <!-- Top Status Bar -->
+    <div class="pt-4 px-6 pb-2 flex justify-between items-center text-xs text-zinc-400 font-medium">
+      <span>14:40</span>
+      <div class="flex items-center space-x-2">
+        <span class="inline-flex items-center text-[11px] bg-emerald-500/20 text-emerald-400 px-2 py-0.5 rounded-full">
+          <span class="w-1.5 h-1.5 rounded-full bg-emerald-400 mr-1.5 animate-pulse"></span> TickTick Онлайн
+        </span>
+        <span>5G</span>
+        <span>100%</span>
+      </div>
+    </div>
+
+    <!-- App Header -->
+    <div class="px-5 py-2 flex items-center justify-between border-b border-zinc-900">
+      <div class="flex items-center space-x-2">
+        <div class="w-8 h-8 rounded-xl bg-blue-600/20 text-blue-400 flex items-center justify-center text-base">
+          🎙️
+        </div>
+        <div>
+          <h1 class="text-sm font-bold tracking-tight text-white leading-none">VOICE TASK</h1>
+          <span class="text-[11px] text-zinc-400">Диспетчер TickTick</span>
+        </div>
+      </div>
+      <button class="w-8 h-8 rounded-full bg-zinc-900 border border-zinc-800 flex items-center justify-center text-zinc-400 hover:text-white">
+        ⚙️
+      </button>
+    </div>
+
+    <!-- Live Recording / Status Banner -->
+    <div id="liveBanner" class="mx-4 my-2 px-3 py-2 rounded-xl bg-zinc-900/60 border border-zinc-800/80 flex items-center justify-between text-xs">
+      <div class="flex items-center space-x-2 text-zinc-300">
+        <span class="text-base" id="bannerIcon">👆</span>
+        <span id="bannerText">Зажмите любую категорию для надиктовки</span>
+      </div>
+      <div id="waveBox" class="hidden flex items-center">
+        <span class="recording-wave" style="animation-delay: 0.1s"></span>
+        <span class="recording-wave" style="animation-delay: 0.3s"></span>
+        <span class="recording-wave" style="animation-delay: 0.5s"></span>
+        <span class="recording-wave" style="animation-delay: 0.2s"></span>
+      </div>
+    </div>
+
+    <!-- 2x4 Categories Grid (Push-to-Talk) -->
+    <div class="px-4 py-1 flex-1 flex flex-col justify-center">
+      <div class="text-[11px] font-semibold tracking-wider text-zinc-400 uppercase mb-2 px-1 flex justify-between">
+        <span>Левый: IT / Бизнес</span>
+        <span class="text-blue-400 font-medium">Правый: Быт / Жизнь</span>
+      </div>
+
+      <div class="grid grid-cols-2 gap-2.5">
+        <!-- ROW 1 -->
+        <button onmousedown="startPTT('3-Вайб', '⚡')" onmouseup="stopPTT()" ontouchstart="startPTT('3-Вайб', '⚡')" ontouchend="stopPTT()" class="card-btn bg-[#18181b] hover:bg-[#202024] p-3.5 rounded-2xl border border-zinc-800/80 flex flex-col justify-between h-[84px] text-left">
+          <div class="flex justify-between items-start">
+            <span class="text-xs font-bold text-white">3-Вайб</span>
+            <div class="w-7 h-7 rounded-lg bg-emerald-500/10 text-emerald-400 flex items-center justify-center text-sm">⚡</div>
+          </div>
+          <span class="text-[11px] text-zinc-400 leading-tight">Кодинг, Cursor, софт</span>
+          <div class="w-full h-1 bg-emerald-500 rounded-full mt-1 opacity-80"></div>
+        </button>
+
+        <button onmousedown="startPTT('7-Тело', '🍏')" onmouseup="stopPTT()" ontouchstart="startPTT('7-Тело', '🍏')" ontouchend="stopPTT()" class="card-btn bg-[#18181b] hover:bg-[#202024] p-3.5 rounded-2xl border border-zinc-800/80 flex flex-col justify-between h-[84px] text-left">
+          <div class="flex justify-between items-start">
+            <span class="text-xs font-bold text-white">7-Тело</span>
+            <div class="w-7 h-7 rounded-lg bg-teal-500/10 text-teal-400 flex items-center justify-center text-sm">🍏</div>
+          </div>
+          <span class="text-[11px] text-zinc-400 leading-tight">Спорт, здоровье, сон</span>
+          <div class="w-full h-1 bg-teal-500 rounded-full mt-1 opacity-80"></div>
+        </button>
+
+        <!-- ROW 2 -->
+        <button onmousedown="startPTT('2-Лиды', '🎯')" onmouseup="stopPTT()" ontouchstart="startPTT('2-Лиды', '🎯')" ontouchend="stopPTT()" class="card-btn bg-[#18181b] hover:bg-[#202024] p-3.5 rounded-2xl border border-zinc-800/80 flex flex-col justify-between h-[84px] text-left">
+          <div class="flex justify-between items-start">
+            <span class="text-xs font-bold text-white">2-Лиды</span>
+            <div class="w-7 h-7 rounded-lg bg-orange-500/10 text-orange-400 flex items-center justify-center text-sm">🎯</div>
+          </div>
+          <span class="text-[11px] text-zinc-400 leading-tight">Клиенты, агентство</span>
+          <div class="w-full h-1 bg-orange-500 rounded-full mt-1 opacity-80"></div>
+        </button>
+
+        <button onmousedown="startPTT('6-Купить', '🛒')" onmouseup="stopPTT()" ontouchstart="startPTT('6-Купить', '🛒')" ontouchend="stopPTT()" class="card-btn bg-[#18181b] hover:bg-[#202024] p-3.5 rounded-2xl border border-zinc-800/80 flex flex-col justify-between h-[84px] text-left">
+          <div class="flex justify-between items-start">
+            <span class="text-xs font-bold text-white">6-Купить</span>
+            <div class="w-7 h-7 rounded-lg bg-amber-500/10 text-amber-400 flex items-center justify-center text-sm">🛒</div>
+          </div>
+          <span class="text-[11px] text-zinc-400 leading-tight">Ozon, магазины, чеки</span>
+          <div class="w-full h-1 bg-amber-500 rounded-full mt-1 opacity-80"></div>
+        </button>
+
+        <!-- ROW 3 -->
+        <button onmousedown="startPTT('1-Лабс', '🧪')" onmouseup="stopPTT()" ontouchstart="startPTT('1-Лабс', '🧪')" ontouchend="stopPTT()" class="card-btn bg-[#18181b] hover:bg-[#202024] p-3.5 rounded-2xl border border-zinc-800/80 flex flex-col justify-between h-[84px] text-left">
+          <div class="flex justify-between items-start">
+            <span class="text-xs font-bold text-white">1-Лабс</span>
+            <div class="w-7 h-7 rounded-lg bg-purple-500/10 text-purple-400 flex items-center justify-center text-sm">🧪</div>
+          </div>
+          <span class="text-[11px] text-zinc-400 leading-tight">R&D, стартап, тесты</span>
+          <div class="w-full h-1 bg-purple-500 rounded-full mt-1 opacity-80"></div>
+        </button>
+
+        <button onmousedown="startPTT('5-Роза', '🌹')" onmouseup="stopPTT()" ontouchstart="startPTT('5-Роза', '🌹')" ontouchend="stopPTT()" class="card-btn bg-[#18181b] hover:bg-[#202024] p-3.5 rounded-2xl border border-zinc-800/80 flex flex-col justify-between h-[84px] text-left">
+          <div class="flex justify-between items-start">
+            <span class="text-xs font-bold text-white">5-Роза</span>
+            <div class="w-7 h-7 rounded-lg bg-rose-500/10 text-rose-400 flex items-center justify-center text-sm">🌹</div>
+          </div>
+          <span class="text-[11px] text-zinc-400 leading-tight">Дом, участок, ремонт</span>
+          <div class="w-full h-1 bg-rose-500 rounded-full mt-1 opacity-80"></div>
+        </button>
+
+        <!-- ROW 4 (Closes to thumb) -->
+        <button onmousedown="startPTT('0-Радар', '📡')" onmouseup="stopPTT()" ontouchstart="startPTT('0-Радар', '📡')" ontouchend="stopPTT()" class="card-btn bg-[#18181b] hover:bg-[#202024] p-3.5 rounded-2xl border border-zinc-800/80 flex flex-col justify-between h-[84px] text-left">
+          <div class="flex justify-between items-start">
+            <span class="text-xs font-bold text-white">0-Радар</span>
+            <div class="w-7 h-7 rounded-lg bg-blue-500/10 text-blue-400 flex items-center justify-center text-sm">📡</div>
+          </div>
+          <span class="text-[11px] text-zinc-400 leading-tight">Поиск, тренды, ИИ</span>
+          <div class="w-full h-1 bg-blue-500 rounded-full mt-1 opacity-80"></div>
+        </button>
+
+        <button onmousedown="startPTT('4-Разное', '📦')" onmouseup="stopPTT()" ontouchstart="startPTT('4-Разное', '📦')" ontouchend="stopPTT()" class="card-btn bg-[#18181b] hover:bg-[#202024] p-3.5 rounded-2xl border-2 border-blue-500/40 flex flex-col justify-between h-[84px] text-left">
+          <div class="flex justify-between items-start">
+            <span class="text-xs font-bold text-white">4-Разное</span>
+            <div class="w-7 h-7 rounded-lg bg-zinc-800 text-zinc-300 flex items-center justify-center text-sm">📦</div>
+          </div>
+          <span class="text-[11px] text-zinc-300 leading-tight">Зона большого пальца</span>
+          <div class="w-full h-1 bg-zinc-400 rounded-full mt-1 opacity-80"></div>
+        </button>
+      </div>
+    </div>
+
+    <!-- 3 Segmented Controls Section -->
+    <div class="px-4 pt-2 pb-4 bg-zinc-950/80 border-t border-zinc-900 space-y-2.5">
+      <!-- 1. Column / Status -->
+      <div>
+        <div class="text-[11px] font-medium text-zinc-400 mb-1 px-1 flex justify-between">
+          <span>КОЛОНКА (СТАТУС)</span>
+          <span id="colLabel" class="text-zinc-300">0-Неотсортирован</span>
+        </div>
+        <div class="grid grid-cols-5 gap-1 bg-zinc-900 p-1 rounded-xl border border-zinc-800">
+          <button onclick="setCol(0)" class="segment-btn active text-[11px] py-1.5 rounded-lg text-center" id="col0">0-Вход</button>
+          <button onclick="setCol(1)" class="segment-btn text-[11px] py-1.5 rounded-lg text-zinc-400 text-center" id="col1">1-План</button>
+          <button onclick="setCol(2)" class="segment-btn text-[11px] py-1.5 rounded-lg text-zinc-400 text-center" id="col2">2-Сейчас</button>
+          <button onclick="setCol(3)" class="segment-btn text-[11px] py-1.5 rounded-lg text-zinc-400 text-center" id="col3">3-Потом</button>
+          <button onclick="setCol(4)" class="segment-btn text-[11px] py-1.5 rounded-lg text-zinc-400 text-center" id="col4">4-Инфо</button>
+        </div>
+      </div>
+
+      <!-- 2. Priority & 3. Size (Side by Side) -->
+      <div class="grid grid-cols-2 gap-2">
+        <!-- Priority -->
+        <div>
+          <div class="text-[11px] font-medium text-zinc-400 mb-1 px-1">ПРИОРИТЕТ</div>
+          <div class="grid grid-cols-3 gap-1 bg-zinc-900 p-1 rounded-xl border border-zinc-800">
+            <button onclick="setPrio('none')" class="segment-btn active text-[11px] py-1.5 rounded-lg text-center" id="prioNone">Обыч.</button>
+            <button onclick="setPrio('yellow')" class="segment-btn text-[11px] py-1.5 rounded-lg text-zinc-400 text-center" id="prioYellow">🟡 Жолт</button>
+            <button onclick="setPrio('red')" class="segment-btn text-[11px] py-1.5 rounded-lg text-zinc-400 text-center" id="prioRed">🔴 Красн</button>
+          </div>
+        </div>
+
+        <!-- Size -->
+        <div>
+          <div class="text-[11px] font-medium text-zinc-400 mb-1 px-1">РАЗМЕР</div>
+          <div class="grid grid-cols-3 gap-1 bg-zinc-900 p-1 rounded-xl border border-zinc-800">
+            <button onclick="setSize('none')" class="segment-btn active text-[11px] py-1.5 rounded-lg text-center" id="sizeNone">Без</button>
+            <button onclick="setSize('small')" class="segment-btn text-[11px] py-1.5 rounded-lg text-zinc-400 text-center" id="sizeSmall">🔹 Мелк</button>
+            <button onclick="setSize('big')" class="segment-btn text-[11px] py-1.5 rounded-lg text-zinc-400 text-center" id="sizeBig">🔷 Бол</button>
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <!-- Confirmation Modal (Dynamic Card) -->
+    <div id="confirmModal" class="hidden absolute inset-0 bg-black/80 backdrop-blur-sm z-50 flex items-end sm:items-center justify-center p-4">
+      <div class="w-full bg-[#18181b] border border-zinc-800 rounded-3xl p-5 shadow-2xl space-y-4 animate-in fade-in slide-in-from-bottom duration-200">
+        <div class="flex items-center justify-between">
+          <div class="flex items-center space-x-2">
+            <span class="text-lg">✨</span>
+            <span class="text-sm font-bold text-white tracking-wide">ПОДТВЕРДИТЕ ЗАДАЧУ</span>
+          </div>
+          <span class="text-[11px] text-emerald-400 bg-emerald-500/10 px-2 py-0.5 rounded-full font-medium">TickTick Open API</span>
+        </div>
+
+        <div class="space-y-3">
+          <div>
+            <label class="text-[11px] font-medium text-zinc-400">Название задачи:</label>
+            <input type="text" id="taskTitleInput" value="Купить чеснок и фильтр для воды" class="w-full mt-1 px-3 py-2.5 bg-zinc-900 border border-zinc-700/80 rounded-xl text-sm text-white focus:outline-none focus:border-blue-500 font-medium">
+          </div>
+
+          <div class="grid grid-cols-2 gap-2 text-xs">
+            <div class="p-2.5 rounded-xl bg-zinc-900 border border-zinc-800 flex items-center justify-between">
+              <span class="text-zinc-400">Категория:</span>
+              <span class="font-bold text-white" id="modalCategory">🛒 6-Купить</span>
+            </div>
+            <div class="p-2.5 rounded-xl bg-zinc-900 border border-zinc-800 flex items-center justify-between">
+              <span class="text-zinc-400">Колонка:</span>
+              <span class="font-bold text-white" id="modalColumn">2-Сейчас</span>
+            </div>
+          </div>
+
+          <div class="flex items-center space-x-2 text-xs">
+            <span class="text-zinc-400">Метки:</span>
+            <span id="badgePrio" class="px-2 py-0.5 rounded-lg bg-amber-500/20 text-amber-300 font-medium border border-amber-500/30">🥎 Жолтый</span>
+            <span id="badgeSize" class="px-2 py-0.5 rounded-lg bg-blue-500/20 text-blue-300 font-medium border border-blue-500/30">🏷️ Мелкий</span>
+          </div>
+        </div>
+
+        <div class="grid grid-cols-2 gap-2 pt-2">
+          <button onclick="closeModal(false)" class="py-3 rounded-xl bg-zinc-900 hover:bg-zinc-800 text-zinc-300 font-semibold text-xs border border-zinc-700/60 flex items-center justify-center space-x-1">
+            <span>❌</span> <span>Отмена</span>
+          </button>
+          <button onclick="closeModal(true)" class="py-3 rounded-xl bg-blue-600 hover:bg-blue-500 text-white font-bold text-xs shadow-lg shadow-blue-600/30 flex items-center justify-center space-x-1">
+            <span>✅</span> <span>Отправить в TickTick</span>
+          </button>
+        </div>
+      </div>
+    </div>
+
+  </div>
+
+  <script>
+    let activeCategory = '6-Купить';
+    let activeCol = 0;
+    let activePrio = 'none';
+    let activeSize = 'none';
+    let pressTimer = null;
+
+    function setCol(id) {
+      activeCol = id;
+      for (let i = 0; i <= 4; i++) {
+        const btn = document.getElementById('col' + i);
+        if (i === id) {
+          btn.className = "segment-btn active text-[11px] py-1.5 rounded-lg text-center";
+        } else {
+          btn.className = "segment-btn text-[11px] py-1.5 rounded-lg text-zinc-400 text-center";
+        }
+      }
+      const names = ['0-Неотсортирован', '1-Задача', '2-Сейчас', '3-Потом', '4-Заметка'];
+      document.getElementById('colLabel').innerText = names[id];
+    }
+
+    function setPrio(type) {
+      activePrio = type;
+      ['None', 'Yellow', 'Red'].forEach(t => {
+        const btn = document.getElementById('prio' + t);
+        if (t.toLowerCase() === type.toLowerCase()) {
+          btn.className = "segment-btn active text-[11px] py-1.5 rounded-lg text-center";
+        } else {
+          btn.className = "segment-btn text-[11px] py-1.5 rounded-lg text-zinc-400 text-center";
+        }
+      });
+    }
+
+    function setSize(type) {
+      activeSize = type;
+      ['None', 'Small', 'Big'].forEach(t => {
+        const btn = document.getElementById('size' + t);
+        if (t.toLowerCase() === type.toLowerCase()) {
+          btn.className = "segment-btn active text-[11px] py-1.5 rounded-lg text-center";
+        } else {
+          btn.className = "segment-btn text-[11px] py-1.5 rounded-lg text-zinc-400 text-center";
+        }
+      });
+    }
+
+    function startPTT(catName, emoji) {
+      activeCategory = emoji + ' ' + catName;
+      document.getElementById('bannerText').innerText = "Говорите... Распознаю речь";
+      document.getElementById('bannerIcon').innerText = "🔴";
+      document.getElementById('waveBox').classList.remove('hidden');
+      document.getElementById('liveBanner').classList.add('border-red-500/50', 'bg-red-500/10');
+    }
+
+    function stopPTT() {
+      document.getElementById('bannerText').innerText = "Обработка завершена!";
+      document.getElementById('bannerIcon').innerText = "✨";
+      document.getElementById('waveBox').classList.add('hidden');
+      document.getElementById('liveBanner').classList.remove('border-red-500/50', 'bg-red-500/10');
+
+      // Show confirmation modal
+      document.getElementById('modalCategory').innerText = activeCategory;
+      const names = ['0-Неотсорт', '1-Задача', '2-Сейчас', '3-Потом', '4-Заметка'];
+      document.getElementById('modalColumn').innerText = names[activeCol];
+
+      document.getElementById('confirmModal').classList.remove('hidden');
+    }
+
+    function closeModal(isSuccess) {
+      document.getElementById('confirmModal').classList.add('hidden');
+      if (isSuccess) {
+        document.getElementById('bannerText').innerText = "✅ Задача успешно сохранена в TickTick!";
+        document.getElementById('bannerIcon').innerText = "🎉";
+        // Reset segments to default
+        setCol(0);
+        setPrio('none');
+        setSize('none');
+        setTimeout(() => {
+          document.getElementById('bannerText').innerText = "Зажмите любую категорию для надиктовки";
+          document.getElementById('bannerIcon').innerText = "👆";
+        }, 3000);
+      } else {
+        document.getElementById('bannerText').innerText = "Зажмите любую категорию для надиктовки";
+        document.getElementById('bannerIcon').innerText = "👆";
+      }
+    }
+  </script>
+</body>
+</html>

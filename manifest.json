@@ -1,0 +1,49 @@
+{
+  "name": "Voice Task — Диспетчер TickTick",
+  "short_name": "VoiceTask",
+  "description": "Ультра-быстрый голосовой диспетчер задач в TickTick",
+  "start_url": "./index.html",
+  "scope": "./",
+  "display": "standalone",
+  "orientation": "portrait",
+  "background_color": "#000000",
+  "theme_color": "#000000",
+  "icons": [
+    {
+      "src": "data:image/svg+xml,<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 192 192'><rect width='192' height='192' rx='40' fill='%2318181b'/><text x='96' y='125' font-size='90' text-anchor='middle'>🎙️</text></svg>",
+      "sizes": "192x192",
+      "type": "image/svg+xml"
+    },
+    {
+      "src": "data:image/svg+xml,<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 512 512'><rect width='512' height='512' rx='100' fill='%23000000'/><text x='256' y='330' font-size='240' text-anchor='middle'>🎙️</text></svg>",
+      "sizes": "512x512",
+      "type": "image/svg+xml"
+    }
+  ],
+  "shortcuts": [
+    {
+      "name": "Купить (Магазин/Озон)",
+      "short_name": "Купить",
+      "url": "./index.html?cat=6-Купить",
+      "description": "Быстрая покупка в 6-Купить"
+    },
+    {
+      "name": "Роза (Дом/Участок)",
+      "short_name": "Роза",
+      "url": "./index.html?cat=5-Роза",
+      "description": "Домашние дела в 5-Роза"
+    },
+    {
+      "name": "Вайб (Кодинг/Софт)",
+      "short_name": "Вайб",
+      "url": "./index.html?cat=3-Вайб",
+      "description": "IT и кодинг в 3-Вайб"
+    },
+    {
+      "name": "Тело (Здоровье/Спорт)",
+      "short_name": "Тело",
+      "url": "./index.html?cat=7-Тело",
+      "description": "Здоровье и спорт в 7-Тело"
+    }
+  ]
+}
