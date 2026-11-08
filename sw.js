@@ -1,12 +1,8 @@
-const CACHE_NAME = 'voicetask-v2';
+const CACHE_NAME = 'voicetask-v3';
 const ASSETS = [
   './',
   './index.html',
-  './manifest.json',
-  './js/ticktick.js',
-  './js/parser.js',
-  './js/speech.js',
-  './js/queue.js'
+  './manifest.json'
 ];
 
 self.addEventListener('install', (e) => {
@@ -20,9 +16,7 @@ self.addEventListener('activate', (e) => {
   e.waitUntil(
     caches.keys().then((keys) => {
       return Promise.all(
-        keys.map((k) => {
-          if (k !== CACHE_NAME) return caches.delete(k);
-        })
+        keys.map((k) => caches.delete(k))
       );
     })
   );
@@ -30,14 +24,21 @@ self.addEventListener('activate', (e) => {
 });
 
 self.addEventListener('fetch', (e) => {
-  // Let API requests pass through to network
+  // Pass through TickTick API
   if (e.request.url.includes('api.ticktick.com')) {
     return;
   }
 
+  // Network-First strategy: always fetch fresh from network if online
   e.respondWith(
-    caches.match(e.request).then((cached) => {
-      return cached || fetch(e.request).catch(() => caches.match('./index.html'));
-    })
+    fetch(e.request)
+      .then((networkResponse) => {
+        if (networkResponse && networkResponse.status === 200 && e.request.method === 'GET') {
+          const clone = networkResponse.clone();
+          caches.open(CACHE_NAME).then((cache) => cache.put(e.request, clone));
+        }
+        return networkResponse;
+      })
+      .catch(() => caches.match(e.request).then((cached) => cached || caches.match('./index.html')))
   );
 });
