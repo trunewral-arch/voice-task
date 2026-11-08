@@ -112,6 +112,31 @@ const testCases = [
     expectedPriorityTag: null,
     expectedSizeTag: null, // reset to без размера
     expectedTitle: "Помыть окно"
+  },
+  // User bug report test cases:
+  {
+    input: "Солнечный Солнечный Солнечный зайчик надо купить",
+    expectedColumn: null,
+    expectedPriority: 0,
+    expectedPriorityTag: null,
+    expectedSizeTag: null,
+    expectedTitle: "Солнечный зайчик"
+  },
+  {
+    input: "купить Солнечный зайчик Солнечный зайчик",
+    expectedColumn: null,
+    expectedPriority: 0,
+    expectedPriorityTag: null,
+    expectedSizeTag: null,
+    expectedTitle: "Солнечный зайчик"
+  },
+  {
+    input: "купить молоко на вечер купить молоко",
+    expectedColumn: null,
+    expectedPriority: 0,
+    expectedPriorityTag: null,
+    expectedSizeTag: null,
+    expectedTitle: "Молоко на вечер"
   }
 ];
 

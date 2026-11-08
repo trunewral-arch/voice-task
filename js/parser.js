@@ -4,17 +4,60 @@
  * Supports real-time chronological switching (the last spoken command takes precedence)
  */
 
-function matchAndStripAll(text, regex) {
-  let matched = false;
-  let current = text;
-  while (true) {
-    const rx = new RegExp(regex.source, 'gi');
-    const match = rx.exec(current);
-    if (!match) break;
-    matched = true;
-    current = current.replace(new RegExp(regex.source, 'gi'), (m, word) => m.replace(word, ' '));
+// Cleans up any stutter, duplicated words or repeated phrases (1-grams, N-grams, suffix echoes)
+function cleanRecognizedText(str) {
+  if (!str || typeof str !== 'string') return '';
+  let tokens = str.trim().split(/\s+/);
+
+  const norm = (w) => w.toLowerCase().replace(/^[.,!?:;"'«»—\-]+|[.,!?:;"'«»—\-]+$/g, '');
+
+  // 1. Remove consecutive identical tokens (1-grams): 'собак собак' -> 'собак'
+  let out = [];
+  for (let i = 0; i < tokens.length; i++) {
+    const currNorm = norm(tokens[i]);
+    const prevNorm = i > 0 ? norm(tokens[i - 1]) : '';
+    if (i > 0 && currNorm && currNorm === prevNorm) {
+      continue;
+    }
+    out.push(tokens[i]);
   }
-  return { matched, text: current };
+  tokens = out;
+
+  // 2. Remove any repeated n-gram phrase of length k (from k = floor(len/2) down to 2)
+  let changed = true;
+  while (changed) {
+    changed = false;
+    const len = tokens.length;
+    for (let k = Math.floor(len / 2); k >= 2; k--) {
+      for (let i = 0; i <= len - 2 * k; i++) {
+        let match = true;
+        for (let j = 0; j < k; j++) {
+          if (norm(tokens[i + j]) !== norm(tokens[i + k + j])) {
+            match = false;
+            break;
+          }
+        }
+        if (match) {
+          tokens.splice(i + k, k);
+          changed = true;
+          break;
+        }
+      }
+      if (changed) break;
+    }
+  }
+
+  // 3. Suffix echo check: if the end of the tokens matches ANY earlier multi-word slice
+  for (let suffixLen = Math.floor(tokens.length / 2); suffixLen >= 2; suffixLen--) {
+    const suffixNorm = tokens.slice(tokens.length - suffixLen).map(t => norm(t)).join(' ');
+    const restNorm = tokens.slice(0, tokens.length - suffixLen).map(t => norm(t)).join(' ');
+    if (restNorm.includes(suffixNorm) && suffixNorm.length > 0) {
+      tokens = tokens.slice(0, tokens.length - suffixLen);
+      break;
+    }
+  }
+
+  return tokens.join(' ').trim();
 }
 
 const TaskParser = {
@@ -43,13 +86,15 @@ const TaskParser = {
 
   // Words to strip completely
   garbageWords: [
-    /(?:^|[\s,.:;!?])(запиши|добавь|пометь|напомни|короче|слушай|эээ|ну|так|в общем|а нет|нет|хотя)(?=$|[\s,.:;!?])/gi
+    /(?:^|[\s,.:;!?])(надо|нужно|необходимо|запиши|добавь|пометь|напомни|короче|слушай|эээ|ну|так|в общем|а нет|нет|хотя)(?=$|[\s,.:;!?])/gi
   ],
 
   // Remove leading category words like "купить" if dictated inside the "6-Купить" project
   categoryPrefixes: [
     /(?:^|[\s,.:;!?])(купить|покупка|вайб|лиды|лабс|радар|тело|здоровье|роза|разное)(?=$|[\s,.:;!?])/gi
   ],
+
+  cleanRecognizedText: cleanRecognizedText,
 
   parse(rawText, activeCategoryName = '') {
     if (!rawText || typeof rawText !== 'string') {
@@ -65,7 +110,7 @@ const TaskParser = {
       };
     }
 
-    const textRaw = rawText.trim();
+    const textRaw = cleanRecognizedText(rawText.trim());
 
     // 1. Find all column occurrences and their positions (chronological order)
     const colOccurrences = [];
@@ -123,6 +168,7 @@ const TaskParser = {
       cleaned = cleaned.replace(new RegExp(cPattern.source, 'gi'), (m, word) => m.replace(word, ' '));
     }
 
+    cleaned = cleanRecognizedText(cleaned);
     cleaned = cleaned.replace(/\s+/g, ' ').trim();
     if (cleaned.length > 0) {
       cleaned = cleaned.charAt(0).toUpperCase() + cleaned.slice(1);
@@ -146,5 +192,5 @@ const TaskParser = {
 };
 
 if (typeof module !== 'undefined') {
-  module.exports = { TaskParser };
+  module.exports = { TaskParser, cleanRecognizedText };
 }
