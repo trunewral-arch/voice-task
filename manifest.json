@@ -1,13 +1,13 @@
 {
-  "name": "Voice Task — Диспетчер TickTick",
-  "short_name": "VoiceTask",
-  "description": "Ультра-быстрый голосовой диспетчер задач в TickTick",
+  "name": "Голосовой Канбан",
+  "short_name": "Канбан",
+  "description": "Автономный 4-кнопочный голосовой пульт для Канбана (Бизнес, Личное, Купить, Радар)",
   "start_url": "./index.html",
   "scope": "./",
   "display": "standalone",
   "orientation": "portrait",
-  "background_color": "#000000",
-  "theme_color": "#000000",
+  "background_color": "#0F172A",
+  "theme_color": "#0F172A",
   "icons": [
     {
       "src": "icon-192.png",
@@ -20,32 +20,6 @@
       "sizes": "512x512",
       "type": "image/png",
       "purpose": "any maskable"
-    }
-  ],
-  "shortcuts": [
-    {
-      "name": "Купить (Магазин/Озон)",
-      "short_name": "Купить",
-      "url": "./index.html?cat=6-Купить",
-      "description": "Быстрая покупка в 6-Купить"
-    },
-    {
-      "name": "Роза (Дом/Участок)",
-      "short_name": "Роза",
-      "url": "./index.html?cat=5-Роза",
-      "description": "Домашние дела в 5-Роза"
-    },
-    {
-      "name": "Вайб (Кодинг/Софт)",
-      "short_name": "Вайб",
-      "url": "./index.html?cat=3-Вайб",
-      "description": "IT и кодинг в 3-Вайб"
-    },
-    {
-      "name": "Тело (Здоровье/Спорт)",
-      "short_name": "Тело",
-      "url": "./index.html?cat=7-Тело",
-      "description": "Здоровье и спорт в 7-Тело"
     }
   ]
 }

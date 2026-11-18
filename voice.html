@@ -1,0 +1,1146 @@
+<!DOCTYPE html>
+<html lang="ru">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no, viewport-fit=cover">
+  <meta name="apple-mobile-web-app-capable" content="yes">
+  <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
+  <meta name="apple-mobile-web-app-title" content="Voice Tasks">
+  <meta name="mobile-web-app-capable" content="yes">
+  <meta name="theme-color" content="#0F172A">
+  <title>Голосовой пульт — Канбан</title>
+
+  <link rel="manifest" href="manifest.json">
+  <link rel="icon" type="image/png" sizes="192x192" href="icon-192.png">
+  <link rel="icon" type="image/png" sizes="512x512" href="icon-512.png">
+  <link rel="apple-touch-icon" href="apple-touch-icon.png">
+
+  <style>
+    :root {
+      --bg: #0F172A;
+      --card-bg: rgba(30, 41, 59, 0.85);
+      --text: #F8FAFC;
+      --text-muted: #94A3B8;
+      --border: rgba(255, 255, 255, 0.1);
+      
+      --c-biz: #3B82F6;
+      --c-pers: #10B981;
+      --c-buy: #F59E0B;
+      --c-radar: #8B5CF6;
+    }
+
+    * {
+      box-sizing: border-box;
+      margin: 0;
+      padding: 0;
+      -webkit-tap-highlight-color: transparent;
+      user-select: none;
+      -webkit-user-select: none;
+    }
+
+    html, body {
+      height: 100%;
+      height: 100dvh;
+      width: 100%;
+      overflow: hidden;
+      position: fixed;
+      touch-action: none;
+      font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, Helvetica, Arial, sans-serif;
+      background: var(--bg);
+      color: var(--text);
+    }
+
+    .app {
+      display: flex;
+      flex-direction: column;
+      height: 100%;
+      height: 100dvh;
+      max-width: 480px;
+      margin: 0 auto;
+      padding: calc(env(safe-area-inset-top, 8px) + 8px) 12px calc(env(safe-area-inset-bottom, 8px) + 12px) 12px;
+      gap: 10px;
+    }
+
+    /* Top Bar */
+    .top-bar {
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      padding: 4px 6px;
+      shrink: 0;
+    }
+
+    .title-row {
+      display: flex;
+      align-items: center;
+      gap: 8px;
+    }
+
+    .app-title {
+      font-size: 17px;
+      font-weight: 700;
+      letter-spacing: -0.3px;
+      color: #FFFFFF;
+    }
+
+    .status-badge {
+      display: inline-flex;
+      align-items: center;
+      gap: 5px;
+      font-size: 11.5px;
+      font-weight: 600;
+      padding: 4px 9px;
+      border-radius: 20px;
+      background: rgba(255, 255, 255, 0.08);
+      color: var(--text-muted);
+      border: 1px solid var(--border);
+      cursor: pointer;
+    }
+
+    .status-badge.has-queue {
+      background: rgba(245, 158, 11, 0.2);
+      color: #FCD34D;
+      border-color: rgba(245, 158, 11, 0.4);
+      animation: pulse 2s infinite;
+    }
+
+    @keyframes pulse {
+      0%, 100% { opacity: 1; }
+      50% { opacity: 0.7; }
+    }
+
+    .btn-icon {
+      background: rgba(255, 255, 255, 0.08);
+      border: 1px solid var(--border);
+      color: var(--text);
+      width: 34px;
+      height: 34px;
+      border-radius: 10px;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      cursor: pointer;
+      font-size: 16px;
+    }
+
+    /* Live Prompt / Transcript Banner */
+    .banner {
+      background: var(--card-bg);
+      border: 1px solid var(--border);
+      border-radius: 14px;
+      padding: 10px 14px;
+      min-height: 52px;
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      gap: 8px;
+      transition: all 0.2s ease;
+      position: relative;
+      overflow: hidden;
+    }
+
+    .banner.recording {
+      border-color: rgba(239, 68, 68, 0.6);
+      background: rgba(239, 68, 68, 0.12);
+      box-shadow: 0 0 16px rgba(239, 68, 68, 0.2);
+    }
+
+    .banner.cancelling {
+      border-color: rgba(239, 68, 68, 0.8);
+      background: rgba(239, 68, 68, 0.25);
+    }
+
+    .banner-text-wrap {
+      display: flex;
+      align-items: center;
+      gap: 8px;
+      flex: 1;
+      min-width: 0;
+    }
+
+    .banner-icon {
+      font-size: 18px;
+      flex-shrink: 0;
+    }
+
+    .banner-text {
+      font-size: 13.5px;
+      line-height: 1.35;
+      color: var(--text);
+      overflow: hidden;
+      text-overflow: ellipsis;
+      display: -webkit-box;
+      -webkit-line-clamp: 2;
+      -webkit-box-orient: vertical;
+    }
+
+    .banner-undo-btn {
+      background: rgba(255, 255, 255, 0.15);
+      border: none;
+      color: #FFFFFF;
+      font-size: 12px;
+      font-weight: 600;
+      padding: 4px 10px;
+      border-radius: 8px;
+      cursor: pointer;
+      flex-shrink: 0;
+    }
+
+    /* Grid of 4 Big Push-to-Talk Buttons */
+    .grid {
+      flex: 1;
+      display: grid;
+      grid-template-columns: 1fr 1fr;
+      grid-template-rows: 1fr 1fr;
+      gap: 12px;
+      margin-top: 4px;
+    }
+
+    .ptt-btn {
+      position: relative;
+      background: var(--card-bg);
+      border: 2px solid var(--border);
+      border-radius: 20px;
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      justify-content: center;
+      gap: 10px;
+      padding: 16px;
+      cursor: pointer;
+      transition: transform 0.12s cubic-bezier(0.34, 1.56, 0.64, 1), background-color 0.15s ease, border-color 0.15s ease, box-shadow 0.15s ease;
+      touch-action: none;
+      box-shadow: 0 4px 16px rgba(0, 0, 0, 0.25);
+    }
+
+    .ptt-btn:active, .ptt-btn.pressed {
+      transform: scale(0.96);
+      box-shadow: 0 2px 8px rgba(0, 0, 0, 0.4);
+    }
+
+    /* Target Category Accents */
+    .ptt-btn[data-target="biz_inbox"] {
+      border-color: rgba(59, 130, 246, 0.35);
+    }
+    .ptt-btn[data-target="biz_inbox"].pressed {
+      background: rgba(59, 130, 246, 0.22);
+      border-color: var(--c-biz);
+      box-shadow: 0 0 24px rgba(59, 130, 246, 0.4);
+    }
+
+    .ptt-btn[data-target="pers_inbox"] {
+      border-color: rgba(16, 185, 129, 0.35);
+    }
+    .ptt-btn[data-target="pers_inbox"].pressed {
+      background: rgba(16, 185, 129, 0.22);
+      border-color: var(--c-pers);
+      box-shadow: 0 0 24px rgba(16, 185, 129, 0.4);
+    }
+
+    .ptt-btn[data-target="pers_buy"] {
+      border-color: rgba(245, 158, 11, 0.35);
+    }
+    .ptt-btn[data-target="pers_buy"].pressed {
+      background: rgba(245, 158, 11, 0.22);
+      border-color: var(--c-buy);
+      box-shadow: 0 0 24px rgba(245, 158, 11, 0.4);
+    }
+
+    .ptt-btn[data-target="biz_radar"] {
+      border-color: rgba(139, 92, 246, 0.35);
+    }
+    .ptt-btn[data-target="biz_radar"].pressed {
+      background: rgba(139, 92, 246, 0.22);
+      border-color: var(--c-radar);
+      box-shadow: 0 0 24px rgba(139, 92, 246, 0.4);
+    }
+
+    .ptt-btn.cancelling {
+      background: rgba(239, 68, 68, 0.3) !important;
+      border-color: #EF4444 !important;
+      transform: scale(0.93);
+    }
+
+    .btn-icon-large {
+      font-size: 42px;
+      line-height: 1;
+      filter: drop-shadow(0 2px 8px rgba(0,0,0,0.3));
+    }
+
+    .btn-label-title {
+      font-size: 16px;
+      font-weight: 700;
+      text-align: center;
+      color: #FFFFFF;
+      letter-spacing: -0.2px;
+    }
+
+    .btn-label-sub {
+      font-size: 11.5px;
+      font-weight: 500;
+      color: var(--text-muted);
+      text-align: center;
+    }
+
+    .ptt-btn .hold-hint {
+      position: absolute;
+      bottom: 8px;
+      font-size: 10px;
+      color: rgba(255, 255, 255, 0.4);
+      text-transform: uppercase;
+      letter-spacing: 0.5px;
+      font-weight: 600;
+    }
+
+    /* Modal Sheet */
+    .modal-overlay {
+      position: fixed;
+      inset: 0;
+      background: rgba(0, 0, 0, 0.7);
+      backdrop-filter: blur(4px);
+      display: flex;
+      align-items: flex-end;
+      justify-content: center;
+      z-index: 100;
+      opacity: 0;
+      pointer-events: none;
+      transition: opacity 0.2s ease;
+    }
+
+    .modal-overlay.open {
+      opacity: 1;
+      pointer-events: auto;
+    }
+
+    .modal-card {
+      background: #1E293B;
+      border: 1px solid var(--border);
+      border-radius: 24px 24px 0 0;
+      width: 100%;
+      max-width: 480px;
+      padding: 20px 20px 32px 20px;
+      transform: translateY(100%);
+      transition: transform 0.25s cubic-bezier(0.16, 1, 0.3, 1);
+    }
+
+    .modal-overlay.open .modal-card {
+      transform: translateY(0);
+    }
+
+    .modal-title {
+      font-size: 17px;
+      font-weight: 700;
+      margin-bottom: 14px;
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+    }
+
+    .form-group {
+      margin-bottom: 14px;
+    }
+
+    .form-label {
+      font-size: 12px;
+      color: var(--text-muted);
+      margin-bottom: 6px;
+      display: block;
+      font-weight: 600;
+    }
+
+    .form-input {
+      width: 100%;
+      background: #0F172A;
+      border: 1px solid var(--border);
+      border-radius: 12px;
+      padding: 10px 14px;
+      color: #FFFFFF;
+      font-size: 14px;
+      font-family: inherit;
+      outline: none;
+    }
+
+    .form-input:focus {
+      border-color: var(--c-biz);
+    }
+
+    .modal-btn {
+      width: 100%;
+      background: var(--c-biz);
+      color: #FFFFFF;
+      border: none;
+      border-radius: 12px;
+      padding: 12px;
+      font-size: 15px;
+      font-weight: 600;
+      cursor: pointer;
+    }
+  </style>
+</head>
+<body>
+
+  <div class="app">
+    <!-- Top Bar -->
+    <header class="top-bar">
+      <div class="title-row">
+        <span class="app-title">🎙️ Голосовой ввод</span>
+      </div>
+      <div style="display: flex; gap: 8px; align-items: center;">
+        <button id="queueBadge" class="status-badge" title="Офлайн очередь">
+          <span id="queueIcon">📡</span>
+          <span id="queueText">Очередь: 0</span>
+        </button>
+        <button id="btnSettings" class="btn-icon" title="Настройки">⚙️</button>
+      </div>
+    </header>
+
+    <!-- Live Banner -->
+    <div id="liveBanner" class="banner">
+      <div class="banner-text-wrap">
+        <span id="bannerIcon" class="banner-icon">👆</span>
+        <span id="bannerText" class="banner-text">Зажмите категорию и назовите задачу</span>
+      </div>
+      <button id="bannerUndoBtn" class="banner-undo-btn" style="display: none;">Отмена</button>
+    </div>
+
+    <!-- 4 Big Push-to-Talk Buttons (Grid 2x2) -->
+    <main class="grid">
+      <!-- Button 1: Входящие Бизнес -->
+      <button
+        class="ptt-btn"
+        data-target="biz_inbox"
+        data-title="Входящие Бизнес"
+        data-icon="🏢"
+      >
+        <span class="btn-icon-large">🏢</span>
+        <span class="btn-label-title">Входящие</span>
+        <span class="btn-label-sub">Бизнес</span>
+        <span class="hold-hint">Удерживайте</span>
+      </button>
+
+      <!-- Button 2: Входящие Личное -->
+      <button
+        class="ptt-btn"
+        data-target="pers_inbox"
+        data-title="Входящие Личное"
+        data-icon="👤"
+      >
+        <span class="btn-icon-large">👤</span>
+        <span class="btn-label-title">Входящие</span>
+        <span class="btn-label-sub">Личное</span>
+        <span class="hold-hint">Удерживайте</span>
+      </button>
+
+      <!-- Button 3: Купить -->
+      <button
+        class="ptt-btn"
+        data-target="pers_buy"
+        data-title="Купить"
+        data-icon="🛒"
+      >
+        <span class="btn-icon-large">🛒</span>
+        <span class="btn-label-title">Купить</span>
+        <span class="btn-label-sub">Личное</span>
+        <span class="hold-hint">Удерживайте</span>
+      </button>
+
+      <!-- Button 4: Радар -->
+      <button
+        class="ptt-btn"
+        data-target="biz_radar"
+        data-title="Радар"
+        data-icon="📡"
+      >
+        <span class="btn-icon-large">📡</span>
+        <span class="btn-label-title">Радар</span>
+        <span class="btn-label-sub">Бизнес</span>
+        <span class="hold-hint">Удерживайте</span>
+      </button>
+    </main>
+  </div>
+
+  <!-- Settings Modal -->
+  <div id="settingsModal" class="modal-overlay">
+    <div class="modal-card">
+      <div class="modal-title">
+        <span>⚙️ Настройки синхронизации</span>
+        <button id="modalCloseBtn" style="background:none; border:none; color:var(--text-muted); font-size:20px; cursor:pointer;">✕</button>
+      </div>
+
+      <div class="form-group">
+        <label class="form-label" for="topicInput">Секретный канал ntfy.sh:</label>
+        <input id="topicInput" type="text" class="form-input" placeholder="например: kanban-sync-ralbit-7x">
+        <small style="color:var(--text-muted); font-size:11px; margin-top:4px; display:block;">
+          Этот же канал должен быть указан в вашем Канбане на компьютере.
+        </small>
+      </div>
+
+      <div style="display:flex; gap:8px; margin-top:16px;">
+        <button id="btnSyncQueue" class="modal-btn" style="background:#334155; flex:1;">Отправить очередь</button>
+        <button id="btnSaveSettings" class="modal-btn" style="flex:1;">Сохранить</button>
+      </div>
+    </div>
+  </div>
+
+  <script>
+    /* ==========================================================================
+       1. Web Audio API Sound Synthesizer (Zero External Dependencies)
+       ========================================================================== */
+    const AudioContextClass = window.AudioContext || window.webkitAudioContext;
+    let audioCtx = null;
+
+    function getAudioContext() {
+      if (!audioCtx && AudioContextClass) {
+        audioCtx = new AudioContextClass();
+      }
+      if (audioCtx && audioCtx.state === 'suspended') {
+        audioCtx.resume();
+      }
+      return audioCtx;
+    }
+
+    function playBeep(freq = 600, duration = 0.04) {
+      try {
+        const ctx = getAudioContext();
+        if (!ctx) return;
+        const osc = ctx.createOscillator();
+        const gain = ctx.createGain();
+        osc.type = 'sine';
+        osc.frequency.setValueAtTime(freq, ctx.currentTime);
+        gain.gain.setValueAtTime(0.08, ctx.currentTime);
+        gain.gain.exponentialRampToValueAtTime(0.001, ctx.currentTime + duration);
+        osc.connect(gain);
+        gain.connect(ctx.destination);
+        osc.start();
+        osc.stop(ctx.currentTime + duration);
+      } catch (e) {}
+    }
+
+    function playSuccessChime() {
+      playBeep(523, 0.05);
+      setTimeout(() => playBeep(659, 0.08), 65);
+    }
+
+    /* ==========================================================================
+       2. Tactile Haptic Feedback
+       ========================================================================== */
+    function triggerHaptic(type = 'tap') {
+      if (!('vibrate' in navigator)) return;
+      try {
+        if (type === 'start') navigator.vibrate(40);
+        else if (type === 'stop') navigator.vibrate(20);
+        else if (type === 'success') navigator.vibrate([30, 40, 30]);
+        else if (type === 'cancel') navigator.vibrate(80);
+        else navigator.vibrate(15);
+      } catch (e) {}
+    }
+
+    /* ==========================================================================
+       3. SpeechEngine with Multi-Segment Android Auto-Restart & Echo Removal
+       (Ported from 2_Voice_Task/js/speech.js)
+       ========================================================================== */
+    class SpeechEngine {
+      constructor({ onStart, onInterim, onFinal, onError, onEnd }) {
+        this.onStart = onStart || (() => {});
+        this.onInterim = onInterim || (() => {});
+        this.onFinal = onFinal || (() => {});
+        this.onError = onError || (() => {});
+        this.onEnd = onEnd || (() => {});
+
+        this.currentRec = null;
+        this.isPressing = false;
+        this.savedSegments = [];
+        this.activeSegment = '';
+        this.restartTimeout = null;
+        this.isFinalizing = false;
+      }
+
+      static cleanRecognizedText(str) {
+        if (!str || typeof str !== 'string') return '';
+        let tokens = str.trim().split(/\s+/);
+        const norm = (w) => w.toLowerCase().replace(/^[.,!?:;"'«»—\-]+|[.,!?:;"'«»—\-]+$/g, '');
+
+        // 1. Remove consecutive identical tokens: 'хлеб хлеб' -> 'хлеб'
+        let out = [];
+        for (let i = 0; i < tokens.length; i++) {
+          const curr = norm(tokens[i]);
+          const prev = i > 0 ? norm(tokens[i - 1]) : '';
+          if (i > 0 && curr && curr === prev) continue;
+          out.push(tokens[i]);
+        }
+        tokens = out;
+
+        // 2. Remove repeated n-gram phrase of length k
+        let changed = true;
+        while (changed) {
+          changed = false;
+          const len = tokens.length;
+          for (let k = Math.floor(len / 2); k >= 2; k--) {
+            for (let i = 0; i <= len - 2 * k; i++) {
+              let match = true;
+              for (let j = 0; j < k; j++) {
+                if (norm(tokens[i + j]) !== norm(tokens[i + k + j])) {
+                  match = false;
+                  break;
+                }
+              }
+              if (match) {
+                tokens.splice(i + k, k);
+                changed = true;
+                break;
+              }
+            }
+            if (changed) break;
+          }
+        }
+
+        // 3. Suffix echo check
+        for (let sLen = Math.floor(tokens.length / 2); sLen >= 2; sLen--) {
+          const sNorm = tokens.slice(tokens.length - sLen).map(norm).join(' ');
+          const rNorm = tokens.slice(0, tokens.length - sLen).map(norm).join(' ');
+          if (rNorm.includes(sNorm) && sNorm.length > 0) {
+            tokens = tokens.slice(0, tokens.length - sLen);
+            break;
+          }
+        }
+
+        // 4. Remove dangling trailing prepositions at the end of speech cut-offs
+        if (tokens.length > 0) {
+          const lastWord = norm(tokens[tokens.length - 1]);
+          if (/^(для|в|на|с|со|к|по|и|а|под|от|у|о|об|про)$/.test(lastWord)) {
+            tokens.pop();
+          }
+        }
+
+        const res = tokens.join(' ').trim();
+        if (!res) return '';
+        return res.charAt(0).toUpperCase() + res.slice(1);
+      }
+
+      commitActiveSegment() {
+        if (!this.activeSegment || !this.activeSegment.trim()) return;
+        const chunk = this.activeSegment.trim();
+        this.activeSegment = '';
+
+        if (this.savedSegments.length > 0) {
+          const last = this.savedSegments[this.savedSegments.length - 1].toLowerCase();
+          const curr = chunk.toLowerCase();
+          if (last === curr || last.endsWith(curr) || last.includes(curr)) return;
+          if (curr.startsWith(last) || curr.includes(last)) {
+            this.savedSegments[this.savedSegments.length - 1] = chunk;
+            return;
+          }
+        }
+        this.savedSegments.push(chunk);
+      }
+
+      getCombinedTranscript() {
+        const parts = [...this.savedSegments];
+        if (this.activeSegment && this.activeSegment.trim()) {
+          parts.push(this.activeSegment.trim());
+        }
+        return SpeechEngine.cleanRecognizedText(parts.join(' '));
+      }
+
+      start() {
+        this.isPressing = true;
+        this.savedSegments = [];
+        this.activeSegment = '';
+        this.isFinalizing = false;
+
+        if (this.restartTimeout) {
+          clearTimeout(this.restartTimeout);
+          this.restartTimeout = null;
+        }
+
+        if (this.currentRec) {
+          try {
+            this.currentRec.onend = null;
+            this.currentRec.onerror = null;
+            this.currentRec.abort();
+          } catch (e) {}
+          this.currentRec = null;
+        }
+
+        this.startRecognitionSession();
+      }
+
+      startRecognitionSession() {
+        if (!this.isPressing) return;
+
+        const SpeechRecognition = window.SpeechRecognition || window.webkitSpeechRecognition;
+        if (!SpeechRecognition) {
+          this.onError("Speech recognition not supported");
+          return;
+        }
+
+        const rec = new SpeechRecognition();
+        rec.lang = 'ru-RU';
+        rec.continuous = true;
+        rec.interimResults = true;
+        rec.maxAlternatives = 1;
+
+        rec.onstart = () => {
+          this.onStart();
+          const currentText = this.getCombinedTranscript();
+          if (currentText) this.onInterim(currentText);
+        };
+
+        rec.onresult = (event) => {
+          let fullText = '';
+          for (let i = 0; i < event.results.length; i++) {
+            if (event.results[i] && event.results[i][0]) {
+              fullText += event.results[i][0].transcript + ' ';
+            }
+          }
+          this.activeSegment = fullText.trim();
+          const combined = this.getCombinedTranscript();
+          this.onInterim(combined);
+        };
+
+        rec.onerror = (event) => {
+          if (event.error === 'not-allowed') {
+            this.isPressing = false;
+            this.onError('not-allowed');
+            this.onEnd();
+          }
+        };
+
+        rec.onend = () => {
+          this.commitActiveSegment();
+          this.currentRec = null;
+
+          // MULTI-SEGMENT CONTINUATION: If user still holds button, restart immediately!
+          if (this.isPressing) {
+            const textSoFar = this.getCombinedTranscript();
+            if (textSoFar) this.onInterim(textSoFar);
+            this.restartTimeout = setTimeout(() => {
+              if (this.isPressing) this.startRecognitionSession();
+            }, 60);
+          } else {
+            this.finalizeRecording();
+          }
+        };
+
+        this.currentRec = rec;
+        try {
+          rec.start();
+        } catch (e) {
+          if (this.isPressing) {
+            this.restartTimeout = setTimeout(() => {
+              if (this.isPressing) {
+                try { rec.start(); } catch (err) {}
+              }
+            }, 100);
+          }
+        }
+      }
+
+      stop() {
+        this.isPressing = false;
+        if (this.restartTimeout) {
+          clearTimeout(this.restartTimeout);
+          this.restartTimeout = null;
+        }
+        if (this.currentRec) {
+          try { this.currentRec.stop(); } catch (e) {}
+        }
+        setTimeout(() => this.finalizeRecording(), 220);
+      }
+
+      finalizeRecording() {
+        if (this.isFinalizing) return;
+        this.isFinalizing = true;
+        setTimeout(() => { this.isFinalizing = false; }, 400);
+
+        this.commitActiveSegment();
+        const raw = this.savedSegments.join(' ').trim();
+        this.savedSegments = [];
+        this.activeSegment = '';
+        this.currentRec = null;
+
+        const phrase = SpeechEngine.cleanRecognizedText(raw);
+        this.onFinal(phrase);
+        this.onEnd();
+      }
+
+      abort() {
+        this.isPressing = false;
+        if (this.restartTimeout) {
+          clearTimeout(this.restartTimeout);
+          this.restartTimeout = null;
+        }
+        this.savedSegments = [];
+        this.activeSegment = '';
+        if (this.currentRec) {
+          try {
+            this.currentRec.onend = null;
+            this.currentRec.onerror = null;
+            this.currentRec.abort();
+          } catch (e) {}
+          this.currentRec = null;
+        }
+        this.onEnd();
+      }
+    }
+
+    /* ==========================================================================
+       4. Offline Queue & Transport (ntfy.sh REST API)
+       ========================================================================== */
+    const STORAGE_QUEUE_KEY = 'kanban_voice_offline_queue';
+    const STORAGE_TOPIC_KEY = 'kanban_sync_ntfy_topic';
+    const DEFAULT_TOPIC = 'kanban-sync-ralbit-77';
+
+    function getSyncTopic() {
+      return localStorage.getItem(STORAGE_TOPIC_KEY) || DEFAULT_TOPIC;
+    }
+
+    function setSyncTopic(topic) {
+      const clean = topic.trim().replace(/[^a-zA-Z0-9_-]/g, '') || DEFAULT_TOPIC;
+      localStorage.setItem(STORAGE_TOPIC_KEY, clean);
+      return clean;
+    }
+
+    class TaskQueue {
+      constructor(onQueueChanged) {
+        this.onQueueChanged = onQueueChanged || (() => {});
+        this.isSyncing = false;
+      }
+
+      getQueue() {
+        try {
+          const raw = localStorage.getItem(STORAGE_QUEUE_KEY);
+          return raw ? JSON.parse(raw) : [];
+        } catch {
+          return [];
+        }
+      }
+
+      saveQueue(items) {
+        try {
+          localStorage.setItem(STORAGE_QUEUE_KEY, JSON.stringify(items));
+          this.onQueueChanged(items.length);
+        } catch {}
+      }
+
+      enqueue(taskPayload) {
+        const queue = this.getQueue();
+        const item = {
+          ...taskPayload,
+          id: 'vtask_' + Date.now().toString(36) + '_' + Math.random().toString(36).slice(2, 6),
+          createdAt: Date.now()
+        };
+        queue.push(item);
+        this.saveQueue(queue);
+        return item;
+      }
+
+      remove(id) {
+        const queue = this.getQueue().filter(t => t.id !== id);
+        this.saveQueue(queue);
+      }
+
+      async sendTaskDirectly(taskPayload) {
+        const topic = getSyncTopic();
+        const url = 'https://ntfy.sh/' + topic;
+        const res = await fetch(url, {
+          method: 'POST',
+          headers: {
+            'Title': taskPayload.target,
+            'Tags': 'microphone,inbox'
+          },
+          body: JSON.stringify(taskPayload)
+        });
+        if (!res.ok) {
+          throw new Error('HTTP ' + res.status);
+        }
+      }
+
+      async syncAll() {
+        if (this.isSyncing) return;
+        const queue = this.getQueue();
+        if (queue.length === 0) return;
+
+        this.isSyncing = true;
+        const remaining = [];
+
+        for (const item of queue) {
+          try {
+            await this.sendTaskDirectly(item);
+          } catch (e) {
+            remaining.push(item);
+          }
+        }
+
+        this.saveQueue(remaining);
+        this.isSyncing = false;
+      }
+    }
+
+    /* ==========================================================================
+       5. App Controller & Push-to-Talk Bindings
+       ========================================================================== */
+    document.addEventListener('DOMContentLoaded', () => {
+      const liveBanner = document.getElementById('liveBanner');
+      const bannerIcon = document.getElementById('bannerIcon');
+      const bannerText = document.getElementById('bannerText');
+      const bannerUndoBtn = document.getElementById('bannerUndoBtn');
+      const queueBadge = document.getElementById('queueBadge');
+      const queueText = document.getElementById('queueText');
+      const queueIcon = document.getElementById('queueIcon');
+
+      let isPressing = false;
+      let isCancelled = false;
+      let currentPressBtn = null;
+      let activeTarget = null;
+      let activeTargetTitle = '';
+      let activeIcon = '📝';
+      let touchStartX = 0;
+      let touchStartY = 0;
+      let lastCreatedTaskId = null;
+      let undoTimer = null;
+
+      const queue = new TaskQueue((size) => {
+        queueText.innerText = `Очередь: ${size}`;
+        if (size > 0) {
+          queueBadge.classList.add('has-queue');
+          queueIcon.innerText = '💾';
+        } else {
+          queueBadge.classList.remove('has-queue');
+          queueIcon.innerText = '📡';
+        }
+      });
+
+      // Update badge initially
+      queue.onQueueChanged(queue.getQueue().length);
+
+      // Auto-sync on network online event
+      window.addEventListener('online', () => {
+        queue.syncAll();
+      });
+
+      // Initialize Speech Engine
+      const speech = new SpeechEngine({
+        onStart: () => {
+          liveBanner.classList.add('recording');
+          bannerIcon.innerText = '🔴';
+        },
+        onInterim: (text) => {
+          if (!isCancelled) {
+            bannerText.innerText = text || `Запись в «${activeTargetTitle}»...`;
+          }
+        },
+        onFinal: async (finalText) => {
+          if (isCancelled || !finalText.trim()) {
+            if (!isCancelled) {
+              bannerIcon.innerText = '⚠️';
+              bannerText.innerText = 'Голос не распознан. Попробуйте снова';
+              setTimeout(resetBanner, 1500);
+            }
+            return;
+          }
+
+          const task = {
+            target: activeTarget,
+            text: finalText.trim()
+          };
+
+          // Try instant send; if offline or fails -> enqueue to localStorage
+          try {
+            await queue.sendTaskDirectly(task);
+            playSuccessChime();
+            triggerHaptic('success');
+            bannerIcon.innerText = '✅';
+            bannerText.innerText = `Отправлено: ${finalText}`;
+          } catch (err) {
+            const enqueued = queue.enqueue(task);
+            lastCreatedTaskId = enqueued.id;
+            playBeep(400, 0.08);
+            triggerHaptic('stop');
+            bannerIcon.innerText = '💾';
+            bannerText.innerText = `Сохранено в очередь: ${finalText}`;
+          }
+
+          // Show Undo button for 4.5 seconds
+          bannerUndoBtn.style.display = 'block';
+          if (undoTimer) clearTimeout(undoTimer);
+          undoTimer = setTimeout(() => {
+            bannerUndoBtn.style.display = 'none';
+            resetBanner();
+          }, 4500);
+        },
+        onError: (err) => {
+          liveBanner.classList.remove('recording');
+          bannerIcon.innerText = '⚠️';
+          bannerText.innerText = err === 'not-allowed' ? 'Нет доступа к микрофону!' : 'Ошибка микрофона';
+        },
+        onEnd: () => {
+          liveBanner.classList.remove('recording', 'cancelling');
+        }
+      });
+
+      function resetBanner() {
+        bannerIcon.innerText = '👆';
+        bannerText.innerText = 'Зажмите категорию и назовите задачу';
+        bannerUndoBtn.style.display = 'none';
+      }
+
+      // Undo button handler
+      bannerUndoBtn.addEventListener('click', (e) => {
+        e.stopPropagation();
+        if (lastCreatedTaskId) {
+          queue.remove(lastCreatedTaskId);
+          lastCreatedTaskId = null;
+        }
+        triggerHaptic('cancel');
+        bannerIcon.innerText = '↩️';
+        bannerText.innerText = 'Действие отменено';
+        bannerUndoBtn.style.display = 'none';
+        setTimeout(resetBanner, 1500);
+      });
+
+      // Bind Push-to-Talk on 4 Category Buttons
+      const buttons = document.querySelectorAll('.ptt-btn');
+      buttons.forEach(btn => {
+        const target = btn.getAttribute('data-target');
+        const title = btn.getAttribute('data-title');
+        const icon = btn.getAttribute('data-icon');
+
+        const onPointerDown = (e) => {
+          e.preventDefault();
+          if (isPressing) return;
+          isPressing = true;
+          isCancelled = false;
+          currentPressBtn = btn;
+          activeTarget = target;
+          activeTargetTitle = title;
+          activeIcon = icon;
+
+          try { btn.setPointerCapture(e.pointerId); } catch (err) {}
+
+          const touch = e.touches ? e.touches[0] : e;
+          touchStartX = touch.clientX;
+          touchStartY = touch.clientY;
+
+          btn.classList.add('pressed');
+          playBeep(700, 0.04);
+          triggerHaptic('start');
+
+          bannerUndoBtn.style.display = 'none';
+          bannerIcon.innerText = icon;
+          bannerText.innerText = `Слушаю [${title}]...`;
+          liveBanner.classList.add('recording');
+
+          speech.start();
+        };
+
+        const onPointerMove = (e) => {
+          if (!isPressing || isCancelled) return;
+          const touch = e.touches ? e.touches[0] : e;
+          const deltaX = touch.clientX - touchStartX;
+          const deltaY = touch.clientY - touchStartY;
+
+          // Swipe-to-cancel gesture (>60px left or up)
+          if (deltaX < -60 || deltaY < -60) {
+            isCancelled = true;
+            btn.classList.remove('pressed');
+            btn.classList.add('cancelling');
+            liveBanner.classList.add('cancelling');
+            bannerIcon.innerText = '🗑️';
+            bannerText.innerText = 'Отпустите для отмены';
+            triggerHaptic('cancel');
+          }
+        };
+
+        const onPointerUp = (e) => {
+          if (!isPressing) return;
+          e.preventDefault();
+          try {
+            if (btn.hasPointerCapture && btn.hasPointerCapture(e.pointerId)) {
+              btn.releasePointerCapture(e.pointerId);
+            }
+          } catch (err) {}
+
+          isPressing = false;
+          btn.classList.remove('pressed', 'cancelling');
+          liveBanner.classList.remove('cancelling');
+          playBeep(500, 0.03);
+          triggerHaptic('stop');
+
+          if (isCancelled) {
+            speech.abort();
+            bannerIcon.innerText = '🗑️';
+            bannerText.innerText = 'Запись отменена';
+            setTimeout(resetBanner, 1500);
+          } else {
+            speech.stop();
+          }
+        };
+
+        btn.addEventListener('pointerdown', onPointerDown);
+        btn.addEventListener('pointermove', onPointerMove);
+        btn.addEventListener('pointerup', onPointerUp);
+        btn.addEventListener('pointercancel', onPointerUp);
+      });
+
+      // Settings Modal
+      const settingsModal = document.getElementById('settingsModal');
+      const btnSettings = document.getElementById('btnSettings');
+      const modalCloseBtn = document.getElementById('modalCloseBtn');
+      const topicInput = document.getElementById('topicInput');
+      const btnSaveSettings = document.getElementById('btnSaveSettings');
+      const btnSyncQueue = document.getElementById('btnSyncQueue');
+
+      btnSettings.addEventListener('click', () => {
+        topicInput.value = getSyncTopic();
+        settingsModal.classList.add('open');
+      });
+
+      function closeModal() {
+        settingsModal.classList.remove('open');
+      }
+
+      modalCloseBtn.addEventListener('click', closeModal);
+      settingsModal.addEventListener('click', (e) => {
+        if (e.target === settingsModal) closeModal();
+      });
+
+      btnSaveSettings.addEventListener('click', () => {
+        const saved = setSyncTopic(topicInput.value);
+        topicInput.value = saved;
+        triggerHaptic('success');
+        playSuccessChime();
+        closeModal();
+      });
+
+      btnSyncQueue.addEventListener('click', async () => {
+        triggerHaptic('tap');
+        btnSyncQueue.innerText = 'Отправка...';
+        await queue.syncAll();
+        btnSyncQueue.innerText = 'Отправить очередь';
+        closeModal();
+      });
+
+      queueBadge.addEventListener('click', () => {
+        if (queue.getQueue().length > 0) {
+          queue.syncAll();
+          triggerHaptic('tap');
+        } else {
+          settingsModal.classList.add('open');
+        }
+      });
+
+      // Register PWA Service Worker for offline support and installation
+      if ('serviceWorker' in navigator) {
+        window.addEventListener('load', () => {
+          navigator.serviceWorker.register('sw.js?v=2.0').then((reg) => {
+            console.log('SW registered:', reg.scope);
+          }).catch((err) => {
+            console.warn('SW registration failed:', err);
+          });
+        });
+      }
+    });
+  </script>
+</body>
+</html>

@@ -1,7 +1,8 @@
-const CACHE_NAME = 'voicetask-v7';
+const CACHE_NAME = 'kanban-voice-v2.0';
 const ASSETS = [
   './',
   './index.html',
+  './voice.html',
   './manifest.json',
   './icon-192.png',
   './icon-512.png',
@@ -19,7 +20,7 @@ self.addEventListener('activate', (e) => {
   e.waitUntil(
     caches.keys().then((keys) => {
       return Promise.all(
-        keys.map((k) => caches.delete(k))
+        keys.filter((k) => k !== CACHE_NAME).map((k) => caches.delete(k))
       );
     })
   );
@@ -27,12 +28,12 @@ self.addEventListener('activate', (e) => {
 });
 
 self.addEventListener('fetch', (e) => {
-  // Pass through TickTick API
-  if (e.request.url.includes('api.ticktick.com')) {
+  // Pass through remote buffer and non-GET calls
+  if (e.request.url.includes('ntfy.sh') || e.request.method !== 'GET') {
     return;
   }
 
-  // Network-First strategy: always fetch fresh from network if online
+  // Network-First with Cache fallback strategy
   e.respondWith(
     fetch(e.request)
       .then((networkResponse) => {
