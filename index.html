@@ -10,10 +10,10 @@
   <meta name="theme-color" content="#0F172A">
   <title>Голосовой пульт — Канбан</title>
 
-  <link rel="manifest" href="manifest.json?v=2.2">
-  <link rel="icon" type="image/png" sizes="192x192" href="icon-192.png?v=2.2">
-  <link rel="icon" type="image/png" sizes="512x512" href="icon-512.png?v=2.2">
-  <link rel="apple-touch-icon" href="apple-touch-icon.png?v=2.2">
+  <link rel="manifest" href="manifest.json?v=2.5">
+  <link rel="icon" type="image/png" sizes="192x192" href="icon-192.png?v=2.5">
+  <link rel="icon" type="image/png" sizes="512x512" href="icon-512.png?v=2.5">
+  <link rel="apple-touch-icon" href="apple-touch-icon.png?v=2.5">
 
   <style>
     :root {
@@ -125,7 +125,7 @@
 
     /* One-time PWA Install Banner */
     .pwa-install-banner {
-      display: flex;
+      display: none;
       align-items: center;
       justify-content: space-between;
       gap: 10px;
@@ -278,6 +278,10 @@
       transition: transform 0.12s cubic-bezier(0.34, 1.56, 0.64, 1), background-color 0.15s ease, border-color 0.15s ease, box-shadow 0.15s ease;
       touch-action: none;
       box-shadow: 0 4px 16px rgba(0, 0, 0, 0.25);
+      will-change: transform;
+      transform: translateZ(0);
+      -webkit-user-select: none;
+      user-select: none;
     }
 
     .ptt-btn:active, .ptt-btn.pressed {
@@ -1380,7 +1384,7 @@
         const saved = setSyncTopic(topicInput.value);
         topicInput.value = saved;
         triggerHaptic('success');
-        playSuccessChime();
+        playDingDingSuccess();
         closeModal();
       });
 
@@ -1401,10 +1405,19 @@
         }
       });
 
-      // Register PWA Service Worker for offline support and installation
+      // Pre-warm AudioContext on very first touch for 0ms audio latency
+      const warmAudio = () => {
+        getAudioContext();
+        window.removeEventListener('pointerdown', warmAudio);
+        window.removeEventListener('touchstart', warmAudio);
+      };
+      window.addEventListener('pointerdown', warmAudio, { passive: true });
+      window.addEventListener('touchstart', warmAudio, { passive: true });
+
+      // Register PWA Service Worker for offline support and instantaneous startup
       if ('serviceWorker' in navigator) {
         window.addEventListener('load', () => {
-          navigator.serviceWorker.register('sw.js?v=2.2').then((reg) => {
+          navigator.serviceWorker.register('sw.js?v=2.5').then((reg) => {
             console.log('SW registered:', reg.scope);
             reg.onupdatefound = () => {
               const installing = reg.installing;

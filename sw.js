@@ -1,4 +1,4 @@
-const CACHE_NAME = 'kanban-voice-v2.2';
+const CACHE_NAME = 'kanban-voice-v2.5';
 const ASSETS = [
   './',
   './index.html',
@@ -6,6 +6,7 @@ const ASSETS = [
   './manifest.json',
   './icon-192.png',
   './icon-512.png',
+  './icon-maskable-512.png',
   './apple-touch-icon.png'
 ];
 
@@ -28,21 +29,38 @@ self.addEventListener('activate', (e) => {
 });
 
 self.addEventListener('fetch', (e) => {
-  // Pass through remote buffer and non-GET calls
+  // Never intercept ntfy.sh buffer calls or non-GET calls
   if (e.request.url.includes('ntfy.sh') || e.request.method !== 'GET') {
     return;
   }
 
-  // Network-First with Cache fallback strategy (bypass HTTP disk cache)
+  // ULTRA-FAST ZERO-LATENCY CACHE STRATEGY (Instant 0ms Startup on Android):
+  // 1. Check local cache ignoring search query parameters (e.g. ?v=2.5 or ?utm_source=homescreen)
   e.respondWith(
-    fetch(e.request, { cache: 'no-cache' })
-      .then((networkResponse) => {
-        if (networkResponse && networkResponse.status === 200 && e.request.method === 'GET') {
-          const clone = networkResponse.clone();
-          caches.open(CACHE_NAME).then((cache) => cache.put(e.request, clone));
-        }
-        return networkResponse;
-      })
-      .catch(() => caches.match(e.request).then((cached) => cached || caches.match('./index.html')))
+    caches.match(e.request, { ignoreSearch: true }).then((cachedResponse) => {
+      // Background revalidation: fetch newest copy without delaying user UI
+      const networkUpdate = fetch(e.request)
+        .then((networkResponse) => {
+          if (networkResponse && networkResponse.status === 200) {
+            const clone = networkResponse.clone();
+            caches.open(CACHE_NAME).then((cache) => cache.put(e.request, clone));
+          }
+          return networkResponse;
+        })
+        .catch(() => null);
+
+      if (cachedResponse) {
+        return cachedResponse;
+      }
+
+      // If navigation request (opening the app) and exact URL wasn't matched, return cached index.html
+      if (e.request.mode === 'navigate') {
+        return caches.match('./index.html').then((indexCached) => {
+          return indexCached || networkUpdate;
+        });
+      }
+
+      return networkUpdate;
+    })
   );
 });
