@@ -491,33 +491,7 @@
 
     <!-- 4 Big Push-to-Talk Buttons (Grid 2x2: Левая колонка - Бизнес, Правая колонка - Личное) -->
     <main class="grid">
-      <!-- Col 1, Row 1: Входящие Бизнес -->
-      <button
-        class="ptt-btn"
-        data-target="biz_inbox"
-        data-title="Входящие Бизнес"
-        data-icon="🏢"
-      >
-        <span class="btn-icon-large">🏢</span>
-        <span class="btn-label-title">Входящие</span>
-        <span class="btn-label-sub">Бизнес</span>
-        <span class="hold-hint">Удерживайте</span>
-      </button>
-
-      <!-- Col 2, Row 1: Купить Личное (Над Входящими Личными) -->
-      <button
-        class="ptt-btn"
-        data-target="pers_buy"
-        data-title="Купить"
-        data-icon="🛒"
-      >
-        <span class="btn-icon-large">🛒</span>
-        <span class="btn-label-title">Купить</span>
-        <span class="btn-label-sub">Личное</span>
-        <span class="hold-hint">Удерживайте</span>
-      </button>
-
-      <!-- Col 1, Row 2: Радар Бизнес (Под Входящими Бизнес) -->
+      <!-- Col 1, Row 1: Радар Бизнес (Сверху) -->
       <button
         class="ptt-btn"
         data-target="biz_radar"
@@ -530,7 +504,33 @@
         <span class="hold-hint">Удерживайте</span>
       </button>
 
-      <!-- Col 2, Row 2: Входящие Личное (Вместо Радара, под Купить) -->
+      <!-- Col 2, Row 1: Купить Личное (Сверху) -->
+      <button
+        class="ptt-btn"
+        data-target="pers_buy"
+        data-title="Купить"
+        data-icon="🛒"
+      >
+        <span class="btn-icon-large">🛒</span>
+        <span class="btn-label-title">Купить</span>
+        <span class="btn-label-sub">Личное</span>
+        <span class="hold-hint">Удерживайте</span>
+      </button>
+
+      <!-- Col 1, Row 2: Входящие Бизнес (Снизу) -->
+      <button
+        class="ptt-btn"
+        data-target="biz_inbox"
+        data-title="Входящие Бизнес"
+        data-icon="🏢"
+      >
+        <span class="btn-icon-large">🏢</span>
+        <span class="btn-label-title">Входящие</span>
+        <span class="btn-label-sub">Бизнес</span>
+        <span class="hold-hint">Удерживайте</span>
+      </button>
+
+      <!-- Col 2, Row 2: Входящие Личное (Снизу) -->
       <button
         class="ptt-btn"
         data-target="pers_inbox"
@@ -555,9 +555,12 @@
 
       <div class="form-group">
         <label class="form-label" for="topicInput">Секретный канал ntfy.sh:</label>
-        <div style="display:flex; gap:6px;">
-          <input id="topicInput" type="text" class="form-input" style="flex:1;" placeholder="kanban-sync-...">
-          <button id="btnGenTopic" type="button" class="modal-btn" style="background:#334155; padding:8px 12px; font-size:12px; white-space:nowrap;" title="Сгенерировать случайный ключ">🎲 Новый</button>
+        <div style="display:flex; gap:8px; margin-bottom:8px;">
+          <input id="topicInput" type="text" class="form-input" style="flex:1; min-width:0; height:46px; font-size:14px; font-family:monospace; padding:8px 12px;" placeholder="kanban-sync-...">
+          <button id="btnPasteTopic" type="button" style="height:46px; padding:0 14px; background:#1E293B; border:1px solid var(--border); color:#60A5FA; border-radius:12px; font-weight:600; font-size:12.5px; white-space:nowrap; cursor:pointer;" title="Вставить из буфера">📋 Вставить</button>
+        </div>
+        <div style="display:flex; justify-content:space-between; align-items:center;">
+          <button id="btnGenTopic" type="button" style="background:none; border:none; color:#94A3B8; font-size:11.5px; text-decoration:underline; cursor:pointer; padding:2px 0;">🎲 Сгенерировать новый ключ</button>
         </div>
         <small style="color:var(--text-muted); font-size:11px; margin-top:6px; display:block; line-height:1.4;">
           🔒 Ключ хранится только в памяти телефона. Откройте персональную ссылку <code style="color:#60A5FA;">#topic=...</code> из Канбана на ПК для автонастройки.
@@ -1320,11 +1323,30 @@
       const btnSaveSettings = document.getElementById('btnSaveSettings');
       const btnSyncQueue = document.getElementById('btnSyncQueue');
       const btnGenTopic = document.getElementById('btnGenTopic');
+      const btnPasteTopic = document.getElementById('btnPasteTopic');
 
       if (btnGenTopic) {
         btnGenTopic.addEventListener('click', () => {
           topicInput.value = generateRandomTopic();
           triggerHaptic('tap');
+        });
+      }
+
+      if (btnPasteTopic) {
+        btnPasteTopic.addEventListener('click', async () => {
+          try {
+            const clipText = await navigator.clipboard.readText();
+            if (clipText) {
+              const match = clipText.match(/topic=([a-zA-Z0-9_-]+)/);
+              const clean = match ? match[1] : clipText.trim().replace(/[^a-zA-Z0-9_-]/g, '');
+              if (clean) {
+                topicInput.value = clean;
+                triggerHaptic('success');
+                return;
+              }
+            }
+          } catch (e) {}
+          topicInput.focus();
         });
       }
 
