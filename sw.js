@@ -1,4 +1,4 @@
-const CACHE_NAME = 'kanban-voice-v2.0';
+const CACHE_NAME = 'kanban-voice-v2.2';
 const ASSETS = [
   './',
   './index.html',
@@ -33,9 +33,9 @@ self.addEventListener('fetch', (e) => {
     return;
   }
 
-  // Network-First with Cache fallback strategy
+  // Network-First with Cache fallback strategy (bypass HTTP disk cache)
   e.respondWith(
-    fetch(e.request)
+    fetch(e.request, { cache: 'no-cache' })
       .then((networkResponse) => {
         if (networkResponse && networkResponse.status === 200 && e.request.method === 'GET') {
           const clone = networkResponse.clone();

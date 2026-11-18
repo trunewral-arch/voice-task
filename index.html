@@ -453,6 +453,10 @@
         <span class="app-title">🎙️ Голосовой ввод</span>
       </div>
       <div style="display: flex; gap: 8px; align-items: center;">
+        <button id="btnInstallPwa" class="status-badge" style="background: rgba(59, 130, 246, 0.25); color: #93C5FD; border-color: rgba(59, 130, 246, 0.5);" title="Установить приложение">
+          <span>📲</span>
+          <span>Установить</span>
+        </button>
         <button id="queueBadge" class="status-badge" title="Офлайн очередь">
           <span id="queueIcon">📡</span>
           <span id="queueText">Очередь: 0</span>
@@ -462,7 +466,7 @@
     </header>
 
     <!-- One-time PWA Install Banner -->
-    <div id="pwaInstallBanner" class="pwa-install-banner" style="display: none;">
+    <div id="pwaInstallBanner" class="pwa-install-banner">
       <div class="pwa-install-content">
         <span class="pwa-install-icon">📲</span>
         <div class="pwa-install-text">
@@ -563,6 +567,13 @@
       <div style="display:flex; gap:8px; margin-top:16px;">
         <button id="btnSyncQueue" class="modal-btn" style="background:#334155; flex:1;">Отправить очередь</button>
         <button id="btnSaveSettings" class="modal-btn" style="flex:1;">Сохранить</button>
+      </div>
+
+      <div style="margin-top: 14px; padding-top: 14px; border-top: 1px solid var(--border);">
+        <button id="btnModalInstallPwa" class="modal-btn" style="background:#2563EB; width:100%; display:flex; align-items:center; justify-content:center; gap:8px;">
+          <span>📲</span>
+          <span>Установить приложение на рабочий стол</span>
+        </button>
       </div>
     </div>
   </div>
@@ -1231,52 +1242,74 @@
       // Initialize topic from URL if present (#topic=... or ?topic=...)
       initTopicFromUrl();
 
-      // One-time PWA Install Banner Logic
+      // PWA Install Logic (Banner + Top-Bar Button + Settings Modal Button)
       let deferredPrompt = null;
       const pwaInstallBanner = document.getElementById('pwaInstallBanner');
       const pwaInstallBtn = document.getElementById('pwaInstallBtn');
       const pwaDismissBtn = document.getElementById('pwaDismissBtn');
+      const btnInstallPwa = document.getElementById('btnInstallPwa');
+      const btnModalInstallPwa = document.getElementById('btnModalInstallPwa');
 
       const isStandalone = window.matchMedia('(display-mode: standalone)').matches || window.navigator.standalone === true;
-      const isDismissed = localStorage.getItem('pwa_install_dismissed') === 'true';
 
-      if (!isStandalone && !isDismissed) {
-        pwaInstallBanner.style.display = 'flex';
+      // If already installed and running standalone, hide all install controls
+      if (isStandalone) {
+        if (pwaInstallBanner) pwaInstallBanner.style.display = 'none';
+        if (btnInstallPwa) btnInstallPwa.style.display = 'none';
+        if (btnModalInstallPwa) btnModalInstallPwa.style.display = 'none';
       }
 
       window.addEventListener('beforeinstallprompt', (e) => {
         e.preventDefault();
         deferredPrompt = e;
-        if (!isStandalone && !isDismissed) {
-          pwaInstallBanner.style.display = 'flex';
+        if (!isStandalone) {
+          if (pwaInstallBanner) pwaInstallBanner.style.display = 'flex';
+          if (btnInstallPwa) btnInstallPwa.style.display = 'inline-flex';
         }
       });
 
-      pwaInstallBtn.addEventListener('click', async () => {
+      async function triggerPwaInstall() {
         triggerHaptic('tap');
         if (deferredPrompt) {
-          deferredPrompt.prompt();
-          const { outcome } = await deferredPrompt.userChoice;
-          if (outcome === 'accepted') {
-            pwaInstallBanner.style.display = 'none';
-            localStorage.setItem('pwa_install_dismissed', 'true');
+          try {
+            deferredPrompt.prompt();
+            const { outcome } = await deferredPrompt.userChoice;
+            if (outcome === 'accepted') {
+              if (pwaInstallBanner) pwaInstallBanner.style.display = 'none';
+              if (btnInstallPwa) btnInstallPwa.style.display = 'none';
+            }
+            deferredPrompt = null;
+          } catch (err) {
+            showInstallFallbackHelp();
           }
-          deferredPrompt = null;
         } else {
-          alert('Для установки: нажмите меню Chrome (три точки ⋮ в правом верхнем углу) ➔ выберите «Установить приложение» или «Добавить на главный экран».');
-          pwaInstallBanner.style.display = 'none';
-          localStorage.setItem('pwa_install_dismissed', 'true');
+          showInstallFallbackHelp();
         }
-      });
+      }
 
-      pwaDismissBtn.addEventListener('click', () => {
-        pwaInstallBanner.style.display = 'none';
-        localStorage.setItem('pwa_install_dismissed', 'true');
-      });
+      function showInstallFallbackHelp() {
+        alert("📲 Как установить приложение на рабочий стол Android:\n\n1. Нажмите меню Chrome (три точки ⋮ в правом верхнем углу)\n2. Выберите «Установить приложение» (или «Добавить на главный экран»)\n3. Нажмите «Установить» — иконка появится на рабочем столе!");
+      }
+
+      if (pwaInstallBtn) pwaInstallBtn.addEventListener('click', triggerPwaInstall);
+      if (btnInstallPwa) btnInstallPwa.addEventListener('click', triggerPwaInstall);
+      if (btnModalInstallPwa) {
+        btnModalInstallPwa.addEventListener('click', () => {
+          closeModal();
+          triggerPwaInstall();
+        });
+      }
+
+      if (pwaDismissBtn) {
+        pwaDismissBtn.addEventListener('click', () => {
+          if (pwaInstallBanner) pwaInstallBanner.style.display = 'none';
+        });
+      }
 
       window.addEventListener('appinstalled', () => {
-        pwaInstallBanner.style.display = 'none';
-        localStorage.setItem('pwa_install_dismissed', 'true');
+        if (pwaInstallBanner) pwaInstallBanner.style.display = 'none';
+        if (btnInstallPwa) btnInstallPwa.style.display = 'none';
+        if (btnModalInstallPwa) btnModalInstallPwa.style.display = 'none';
       });
 
       // Settings Modal
@@ -1337,8 +1370,17 @@
       // Register PWA Service Worker for offline support and installation
       if ('serviceWorker' in navigator) {
         window.addEventListener('load', () => {
-          navigator.serviceWorker.register('sw.js?v=2.0').then((reg) => {
+          navigator.serviceWorker.register('sw.js?v=2.2').then((reg) => {
             console.log('SW registered:', reg.scope);
+            reg.onupdatefound = () => {
+              const installing = reg.installing;
+              installing.onstatechange = () => {
+                if (installing.state === 'installed' && navigator.serviceWorker.controller) {
+                  console.log('New version installed, reloading...');
+                  window.location.reload();
+                }
+              };
+            };
           }).catch((err) => {
             console.warn('SW registration failed:', err);
           });
