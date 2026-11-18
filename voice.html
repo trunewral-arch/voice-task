@@ -10,10 +10,10 @@
   <meta name="theme-color" content="#0F172A">
   <title>Голосовой пульт — Канбан</title>
 
-  <link rel="manifest" href="manifest.json">
-  <link rel="icon" type="image/png" sizes="192x192" href="icon-192.png">
-  <link rel="icon" type="image/png" sizes="512x512" href="icon-512.png">
-  <link rel="apple-touch-icon" href="apple-touch-icon.png">
+  <link rel="manifest" href="manifest.json?v=2.2">
+  <link rel="icon" type="image/png" sizes="192x192" href="icon-192.png?v=2.2">
+  <link rel="icon" type="image/png" sizes="512x512" href="icon-512.png?v=2.2">
+  <link rel="apple-touch-icon" href="apple-touch-icon.png?v=2.2">
 
   <style>
     :root {
@@ -598,16 +598,16 @@
       return audioCtx;
     }
 
-    function playBeep(freq = 600, duration = 0.04) {
+    function playTone(freq = 600, duration = 0.06, volume = 0.25, type = 'sine') {
       try {
         const ctx = getAudioContext();
         if (!ctx) return;
         const osc = ctx.createOscillator();
         const gain = ctx.createGain();
-        osc.type = 'sine';
+        osc.type = type;
         osc.frequency.setValueAtTime(freq, ctx.currentTime);
-        gain.gain.setValueAtTime(0.08, ctx.currentTime);
-        gain.gain.exponentialRampToValueAtTime(0.001, ctx.currentTime + duration);
+        gain.gain.setValueAtTime(volume, ctx.currentTime);
+        gain.gain.exponentialRampToValueAtTime(0.0001, ctx.currentTime + duration);
         osc.connect(gain);
         gain.connect(ctx.destination);
         osc.start();
@@ -615,9 +615,20 @@
       } catch (e) {}
     }
 
-    function playSuccessChime() {
-      playBeep(523, 0.05);
-      setTimeout(() => playBeep(659, 0.08), 65);
+    function playBeep(freq = 600, duration = 0.04) {
+      playTone(freq, duration, 0.22);
+    }
+
+    // Хрустальный звонкий "динь-динь" (G5 784 Гц ➔ C6 1046 Гц)
+    function playDingDingSuccess() {
+      playTone(784, 0.07, 0.28);
+      setTimeout(() => playTone(1046, 0.14, 0.32), 65);
+    }
+
+    // Низкий двухтональный звук при сохранении в офлайн (440 Гц ➔ 330 Гц)
+    function playOfflineFeedback() {
+      playTone(440, 0.08, 0.25);
+      setTimeout(() => playTone(330, 0.12, 0.25), 60);
     }
 
     /* ==========================================================================
@@ -626,11 +637,12 @@
     function triggerHaptic(type = 'tap') {
       if (!('vibrate' in navigator)) return;
       try {
-        if (type === 'start') navigator.vibrate(40);
+        if (type === 'start') navigator.vibrate(35);
         else if (type === 'stop') navigator.vibrate(20);
-        else if (type === 'success') navigator.vibrate([30, 40, 30]);
-        else if (type === 'cancel') navigator.vibrate(80);
-        else navigator.vibrate(15);
+        else if (type === 'success') navigator.vibrate([40, 50, 75]); // двойное радостное "тук-тук"
+        else if (type === 'offline') navigator.vibrate([70, 50, 95]); // плотная двойная вибрация офлайн
+        else if (type === 'cancel') navigator.vibrate(90);
+        else navigator.vibrate(20);
       } catch (e) {}
     }
 
@@ -1107,17 +1119,17 @@
           // Try instant send; if offline or fails -> enqueue to localStorage
           try {
             await queue.sendTaskDirectly(task);
-            playSuccessChime();
+            playDingDingSuccess();
             triggerHaptic('success');
             bannerIcon.innerText = '✅';
             bannerText.innerText = `Отправлено: ${finalText}`;
           } catch (err) {
             const enqueued = queue.enqueue(task);
             lastCreatedTaskId = enqueued.id;
-            playBeep(400, 0.08);
-            triggerHaptic('stop');
+            playOfflineFeedback();
+            triggerHaptic('offline');
             bannerIcon.innerText = '💾';
-            bannerText.innerText = `Сохранено в очередь: ${finalText}`;
+            bannerText.innerText = `Сохранено в память (офлайн): ${finalText}`;
           }
 
           // Show Undo button for 4.5 seconds
