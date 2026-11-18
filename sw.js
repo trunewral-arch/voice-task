@@ -1,10 +1,11 @@
-const CACHE_NAME = 'kanban-voice-v2.5';
+const CACHE_NAME = 'kanban-voice-v3.0';
 const ASSETS = [
   './',
   './index.html',
   './voice.html',
   './manifest.json',
   './icon-192.png',
+  './icon-maskable-192.png',
   './icon-512.png',
   './icon-maskable-512.png',
   './apple-touch-icon.png'
@@ -35,7 +36,7 @@ self.addEventListener('fetch', (e) => {
   }
 
   // ULTRA-FAST ZERO-LATENCY CACHE STRATEGY (Instant 0ms Startup on Android):
-  // 1. Check local cache ignoring search query parameters (e.g. ?v=2.5 or ?utm_source=homescreen)
+  // 1. Check local cache ignoring search query parameters (e.g. ?v=3.0 or ?utm_source=homescreen)
   e.respondWith(
     caches.match(e.request, { ignoreSearch: true }).then((cachedResponse) => {
       // Background revalidation: fetch newest copy without delaying user UI

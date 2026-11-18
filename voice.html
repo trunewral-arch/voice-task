@@ -10,10 +10,10 @@
   <meta name="theme-color" content="#0F172A">
   <title>Голосовой пульт — Канбан</title>
 
-  <link rel="manifest" href="manifest.json?v=2.5">
-  <link rel="icon" type="image/png" sizes="192x192" href="icon-192.png?v=2.5">
-  <link rel="icon" type="image/png" sizes="512x512" href="icon-512.png?v=2.5">
-  <link rel="apple-touch-icon" href="apple-touch-icon.png?v=2.5">
+  <link rel="manifest" href="manifest.json?v=3.0">
+  <link rel="icon" type="image/png" sizes="192x192" href="icon-192.png?v=3.0">
+  <link rel="icon" type="image/png" sizes="512x512" href="icon-512.png?v=3.0">
+  <link rel="apple-touch-icon" href="apple-touch-icon.png?v=3.0">
 
   <style>
     :root {
@@ -581,6 +581,12 @@
           <span>📲</span>
           <span>Установить приложение на рабочий стол</span>
         </button>
+        <button id="btnReloadApp" type="button" style="margin-top:10px; width:100%; background:transparent; border:1px dashed var(--border); color:var(--text-muted); padding:10px; border-radius:12px; font-size:12px; cursor:pointer;">
+          🔄 Очистить кэш и обновить приложение
+        </button>
+        <div style="margin-top:8px; font-size:11px; color:#64748B; line-height:1.4; text-align:center;">
+          💡 Для замены иконки на Android: удалите старый значок с экрана телефона, откройте сайт в Chrome и нажмите «Установить».
+        </div>
       </div>
     </div>
   </div>
@@ -1405,6 +1411,29 @@
         }
       });
 
+      // Hard Cache Wipe / Reload helper
+      const btnReloadApp = document.getElementById('btnReloadApp');
+      if (btnReloadApp) {
+        btnReloadApp.addEventListener('click', async () => {
+          btnReloadApp.textContent = '⏳ Очистка кэша...';
+          try {
+            if ('caches' in window) {
+              const keys = await caches.keys();
+              await Promise.all(keys.map(k => caches.delete(k)));
+            }
+            if ('serviceWorker' in navigator) {
+              const regs = await navigator.serviceWorker.getRegistrations();
+              for (let reg of regs) {
+                await reg.unregister();
+              }
+            }
+          } catch (e) {
+            console.error('Cache wipe error:', e);
+          }
+          window.location.href = window.location.origin + window.location.pathname + '?v=' + Date.now() + window.location.hash;
+        });
+      }
+
       // Pre-warm AudioContext on very first touch for 0ms audio latency
       const warmAudio = () => {
         getAudioContext();
@@ -1417,7 +1446,7 @@
       // Register PWA Service Worker for offline support and instantaneous startup
       if ('serviceWorker' in navigator) {
         window.addEventListener('load', () => {
-          navigator.serviceWorker.register('sw.js?v=2.5').then((reg) => {
+          navigator.serviceWorker.register('sw.js?v=3.0').then((reg) => {
             console.log('SW registered:', reg.scope);
             reg.onupdatefound = () => {
               const installing = reg.installing;
