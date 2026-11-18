@@ -123,6 +123,73 @@
       font-size: 16px;
     }
 
+    /* One-time PWA Install Banner */
+    .pwa-install-banner {
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      gap: 10px;
+      padding: 10px 12px;
+      background: linear-gradient(135deg, rgba(37, 99, 235, 0.28), rgba(30, 41, 59, 0.95));
+      border: 1px solid rgba(59, 130, 246, 0.45);
+      border-radius: 14px;
+      box-shadow: 0 4px 14px rgba(0, 0, 0, 0.35);
+      animation: fadeIn 0.25s ease-out;
+    }
+
+    .pwa-install-content {
+      display: flex;
+      align-items: center;
+      gap: 10px;
+      min-width: 0;
+    }
+
+    .pwa-install-icon {
+      font-size: 22px;
+      flex-shrink: 0;
+    }
+
+    .pwa-install-title {
+      font-size: 13px;
+      font-weight: 700;
+      color: #FFFFFF;
+      line-height: 1.2;
+    }
+
+    .pwa-install-sub {
+      font-size: 11px;
+      color: #94A3B8;
+      line-height: 1.2;
+      margin-top: 1px;
+    }
+
+    .pwa-btn-primary {
+      background: #3B82F6;
+      border: none;
+      color: #FFFFFF;
+      font-size: 12.5px;
+      font-weight: 700;
+      padding: 7px 14px;
+      border-radius: 10px;
+      cursor: pointer;
+      box-shadow: 0 2px 8px rgba(59, 130, 246, 0.4);
+      white-space: nowrap;
+    }
+
+    .pwa-btn-primary:active {
+      transform: scale(0.96);
+    }
+
+    .pwa-btn-close {
+      background: rgba(255, 255, 255, 0.08);
+      border: none;
+      color: #94A3B8;
+      font-size: 13px;
+      padding: 6px 9px;
+      border-radius: 8px;
+      cursor: pointer;
+    }
+
     /* Live Prompt / Transcript Banner */
     .banner {
       background: var(--card-bg);
@@ -394,6 +461,21 @@
       </div>
     </header>
 
+    <!-- One-time PWA Install Banner -->
+    <div id="pwaInstallBanner" class="pwa-install-banner" style="display: none;">
+      <div class="pwa-install-content">
+        <span class="pwa-install-icon">📲</span>
+        <div class="pwa-install-text">
+          <div class="pwa-install-title">Установить как приложение</div>
+          <div class="pwa-install-sub">Для быстрого запуска в 1 клик с экрана</div>
+        </div>
+      </div>
+      <div style="display: flex; gap: 6px; align-items: center;">
+        <button id="pwaInstallBtn" class="pwa-btn-primary">Установить</button>
+        <button id="pwaDismissBtn" class="pwa-btn-close" title="Закрыть">✕</button>
+      </div>
+    </div>
+
     <!-- Live Banner -->
     <div id="liveBanner" class="banner">
       <div class="banner-text-wrap">
@@ -403,9 +485,9 @@
       <button id="bannerUndoBtn" class="banner-undo-btn" style="display: none;">Отмена</button>
     </div>
 
-    <!-- 4 Big Push-to-Talk Buttons (Grid 2x2) -->
+    <!-- 4 Big Push-to-Talk Buttons (Grid 2x2: Левая колонка - Бизнес, Правая колонка - Личное) -->
     <main class="grid">
-      <!-- Button 1: Входящие Бизнес -->
+      <!-- Col 1, Row 1: Входящие Бизнес -->
       <button
         class="ptt-btn"
         data-target="biz_inbox"
@@ -418,20 +500,7 @@
         <span class="hold-hint">Удерживайте</span>
       </button>
 
-      <!-- Button 2: Входящие Личное -->
-      <button
-        class="ptt-btn"
-        data-target="pers_inbox"
-        data-title="Входящие Личное"
-        data-icon="👤"
-      >
-        <span class="btn-icon-large">👤</span>
-        <span class="btn-label-title">Входящие</span>
-        <span class="btn-label-sub">Личное</span>
-        <span class="hold-hint">Удерживайте</span>
-      </button>
-
-      <!-- Button 3: Купить -->
+      <!-- Col 2, Row 1: Купить Личное (Над Входящими Личными) -->
       <button
         class="ptt-btn"
         data-target="pers_buy"
@@ -444,7 +513,7 @@
         <span class="hold-hint">Удерживайте</span>
       </button>
 
-      <!-- Button 4: Радар -->
+      <!-- Col 1, Row 2: Радар Бизнес (Под Входящими Бизнес) -->
       <button
         class="ptt-btn"
         data-target="biz_radar"
@@ -454,6 +523,19 @@
         <span class="btn-icon-large">📡</span>
         <span class="btn-label-title">Радар</span>
         <span class="btn-label-sub">Бизнес</span>
+        <span class="hold-hint">Удерживайте</span>
+      </button>
+
+      <!-- Col 2, Row 2: Входящие Личное (Вместо Радара, под Купить) -->
+      <button
+        class="ptt-btn"
+        data-target="pers_inbox"
+        data-title="Входящие Личное"
+        data-icon="👤"
+      >
+        <span class="btn-icon-large">👤</span>
+        <span class="btn-label-title">Входящие</span>
+        <span class="btn-label-sub">Личное</span>
         <span class="hold-hint">Удерживайте</span>
       </button>
     </main>
@@ -469,9 +551,12 @@
 
       <div class="form-group">
         <label class="form-label" for="topicInput">Секретный канал ntfy.sh:</label>
-        <input id="topicInput" type="text" class="form-input" placeholder="например: kanban-sync-ralbit-7x">
-        <small style="color:var(--text-muted); font-size:11px; margin-top:4px; display:block;">
-          Этот же канал должен быть указан в вашем Канбане на компьютере.
+        <div style="display:flex; gap:6px;">
+          <input id="topicInput" type="text" class="form-input" style="flex:1;" placeholder="kanban-sync-...">
+          <button id="btnGenTopic" type="button" class="modal-btn" style="background:#334155; padding:8px 12px; font-size:12px; white-space:nowrap;" title="Сгенерировать случайный ключ">🎲 Новый</button>
+        </div>
+        <small style="color:var(--text-muted); font-size:11px; margin-top:6px; display:block; line-height:1.4;">
+          🔒 Ключ хранится только в памяти телефона. Откройте персональную ссылку <code style="color:#60A5FA;">#topic=...</code> из Канбана на ПК для автонастройки.
         </small>
       </div>
 
@@ -789,15 +874,62 @@
        ========================================================================== */
     const STORAGE_QUEUE_KEY = 'kanban_voice_offline_queue';
     const STORAGE_TOPIC_KEY = 'kanban_sync_ntfy_topic';
-    const DEFAULT_TOPIC = 'kanban-sync-ralbit-77';
+    const DEFAULT_TOPIC = '';
+
+    function generateRandomTopic() {
+      const chars = 'abcdef0123456789';
+      let rand = '';
+      for (let i = 0; i < 16; i++) {
+        rand += chars.charAt(Math.floor(Math.random() * chars.length));
+      }
+      return 'kanban-' + rand;
+    }
+
+    function initTopicFromUrl() {
+      try {
+        // 1. Check URL hash (e.g. #topic=SECRET_KEY) - never sent to server, 100% private
+        const hash = window.location.hash;
+        if (hash) {
+          const match = hash.match(/topic=([a-zA-Z0-9_-]+)/);
+          if (match && match[1]) {
+            setSyncTopic(match[1]);
+            // Clear URL hash immediately so secret is not visible or stored in history
+            history.replaceState(null, '', window.location.pathname + window.location.search);
+            return match[1];
+          }
+        }
+        // 2. Check query string (e.g. ?topic=SECRET_KEY)
+        const params = new URLSearchParams(window.location.search);
+        const queryTopic = params.get('topic');
+        if (queryTopic) {
+          const clean = queryTopic.trim().replace(/[^a-zA-Z0-9_-]/g, '');
+          if (clean) {
+            setSyncTopic(clean);
+            history.replaceState(null, '', window.location.pathname);
+            return clean;
+          }
+        }
+      } catch {}
+      return getSyncTopic();
+    }
 
     function getSyncTopic() {
-      return localStorage.getItem(STORAGE_TOPIC_KEY) || DEFAULT_TOPIC;
+      try {
+        return localStorage.getItem(STORAGE_TOPIC_KEY) || DEFAULT_TOPIC;
+      } catch {
+        return DEFAULT_TOPIC;
+      }
     }
 
     function setSyncTopic(topic) {
-      const clean = topic.trim().replace(/[^a-zA-Z0-9_-]/g, '') || DEFAULT_TOPIC;
-      localStorage.setItem(STORAGE_TOPIC_KEY, clean);
+      const clean = (topic || '').trim().replace(/[^a-zA-Z0-9_-]/g, '');
+      try {
+        if (clean) {
+          localStorage.setItem(STORAGE_TOPIC_KEY, clean);
+        } else {
+          localStorage.removeItem(STORAGE_TOPIC_KEY);
+        }
+      } catch {}
       return clean;
     }
 
@@ -842,7 +974,10 @@
 
       async sendTaskDirectly(taskPayload) {
         const topic = getSyncTopic();
-        const url = 'https://ntfy.sh/' + topic;
+        if (!topic) {
+          throw new Error('TOPIC_NOT_SET');
+        }
+        const url = 'https://ntfy.sh/' + encodeURIComponent(topic);
         const res = await fetch(url, {
           method: 'POST',
           headers: {
@@ -944,6 +1079,16 @@
             target: activeTarget,
             text: finalText.trim()
           };
+
+          if (!getSyncTopic()) {
+            topicInput.value = '';
+            settingsModal.classList.add('open');
+            playBeep(400, 0.1);
+            triggerHaptic('cancel');
+            bannerIcon.innerText = '⚠️';
+            bannerText.innerText = 'Канал не настроен! Откройте ссылку с ПК или укажите ключ в ⚙️';
+            return;
+          }
 
           // Try instant send; if offline or fails -> enqueue to localStorage
           try {
@@ -1083,6 +1228,57 @@
         btn.addEventListener('pointercancel', onPointerUp);
       });
 
+      // Initialize topic from URL if present (#topic=... or ?topic=...)
+      initTopicFromUrl();
+
+      // One-time PWA Install Banner Logic
+      let deferredPrompt = null;
+      const pwaInstallBanner = document.getElementById('pwaInstallBanner');
+      const pwaInstallBtn = document.getElementById('pwaInstallBtn');
+      const pwaDismissBtn = document.getElementById('pwaDismissBtn');
+
+      const isStandalone = window.matchMedia('(display-mode: standalone)').matches || window.navigator.standalone === true;
+      const isDismissed = localStorage.getItem('pwa_install_dismissed') === 'true';
+
+      if (!isStandalone && !isDismissed) {
+        pwaInstallBanner.style.display = 'flex';
+      }
+
+      window.addEventListener('beforeinstallprompt', (e) => {
+        e.preventDefault();
+        deferredPrompt = e;
+        if (!isStandalone && !isDismissed) {
+          pwaInstallBanner.style.display = 'flex';
+        }
+      });
+
+      pwaInstallBtn.addEventListener('click', async () => {
+        triggerHaptic('tap');
+        if (deferredPrompt) {
+          deferredPrompt.prompt();
+          const { outcome } = await deferredPrompt.userChoice;
+          if (outcome === 'accepted') {
+            pwaInstallBanner.style.display = 'none';
+            localStorage.setItem('pwa_install_dismissed', 'true');
+          }
+          deferredPrompt = null;
+        } else {
+          alert('Для установки: нажмите меню Chrome (три точки ⋮ в правом верхнем углу) ➔ выберите «Установить приложение» или «Добавить на главный экран».');
+          pwaInstallBanner.style.display = 'none';
+          localStorage.setItem('pwa_install_dismissed', 'true');
+        }
+      });
+
+      pwaDismissBtn.addEventListener('click', () => {
+        pwaInstallBanner.style.display = 'none';
+        localStorage.setItem('pwa_install_dismissed', 'true');
+      });
+
+      window.addEventListener('appinstalled', () => {
+        pwaInstallBanner.style.display = 'none';
+        localStorage.setItem('pwa_install_dismissed', 'true');
+      });
+
       // Settings Modal
       const settingsModal = document.getElementById('settingsModal');
       const btnSettings = document.getElementById('btnSettings');
@@ -1090,6 +1286,14 @@
       const topicInput = document.getElementById('topicInput');
       const btnSaveSettings = document.getElementById('btnSaveSettings');
       const btnSyncQueue = document.getElementById('btnSyncQueue');
+      const btnGenTopic = document.getElementById('btnGenTopic');
+
+      if (btnGenTopic) {
+        btnGenTopic.addEventListener('click', () => {
+          topicInput.value = generateRandomTopic();
+          triggerHaptic('tap');
+        });
+      }
 
       btnSettings.addEventListener('click', () => {
         topicInput.value = getSyncTopic();
